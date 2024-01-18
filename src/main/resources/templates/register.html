@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Registration</title>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a th:href="@{/login}">Login</a></li>
+        </ul>
+    </nav>
+    <div>
+        <h2>Registration</h2>
+        <div th:if="${param.success}">
+            Ты зарегистрировался
+        </div>
+        <div>
+            <form method="post" role="form" th:object="${user}" th:action="@{/register/save}">
+                <label>FirstName</label>
+                <input class="form-control" id="firstName" name="firstName" placeholder="enter first name" th:field="*{firstName}" type="text">
+                <p th:errors="*{firstName}" class="text-danger"
+                th:if="${#fields.hasErrors('firstName')}"></p>
+                <label>LastName</label>
+                <input class="form-control" id="lastName" name="lastName" placeholder="enter last name" th:field="*{lastName}" type="text">
+                <p th:errors = "*{lastName}" class="text-danger"
+                   th:if="${#fields.hasErrors('lastName')}"></p>
+                <label>Email</label>
+                <input id="email" name="email" placeholder="enter email" th:field="*{email}" type="email">
+                <p th:errors = "*{email}" class="text-danger"
+                   th:if="${#fields.hasErrors('email')}"></p>
+                <label>password</label>
+                <input class="form-control" id="password" name="password" placeholder="enter password" th:field="*{password}" type="text">
+                <p th:errors = "*{password}" class="text-danger"
+                   th:if="${#fields.hasErrors('password')}"></p>
+                <button type="submit">submit</button>
+                <span>Already registered <a th:href="@{/login}">Login here</a></span>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
