@@ -1,24 +1,25 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>User List</title>
-</head>
 <body>
 <h1>User List</h1>
 
-<ul>
-    <li> <a th:href="@{/logout}">Logout</a></li>
-</ul>
 
+<!-- Добавьте блок для отображения сообщения -->
+<div th:if="${message}" th:text="${message}" style="color: green;"></div>
+
+<form action="/addUser" method="post">
+    <label>Name: </label>
+    <input type="text" id="userName" name="name" required>
+    <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+    <button type="submit">Add User</button>
+</form>
+
+<!-- Остальной код остается без изменений -->
 <table>
     <tbody>
     <tr th:each="user : ${users}">
-        <td th:text="${user.firstName}"></td>
-        <td th:text="${user.lastName}"></td>
-        <td th:text="${user.email}"></td>
+        <td th:text="${user.name}"></td>
+        <td><a th:href="@{/deleteUser/{id}(id=${user.id})}">Delete </a></td>
+        <td><a th:href="@{/editUser/{id}(id=${user.id})}">Edit </a></td>
     </tr>
     </tbody>
 </table>
-
 </body>
-</html>

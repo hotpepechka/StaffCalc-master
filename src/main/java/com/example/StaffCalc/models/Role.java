@@ -5,10 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.security.core.GrantedAuthority;
 
 import java.util.List;
-import java.util.Set;
 
 @NoArgsConstructor
 @Setter
@@ -26,5 +24,5 @@ public class Role {
     private String name;
 
     @ManyToMany(mappedBy = "roles")
-    private List<User> users;
+    private List<Admin> users;
 }
