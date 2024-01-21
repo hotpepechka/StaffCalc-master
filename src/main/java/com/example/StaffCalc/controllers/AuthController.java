@@ -1,24 +1,36 @@
 package com.example.StaffCalc.controllers;
 import com.example.StaffCalc.models.User;
 import com.example.StaffCalc.repository.UserRepository;
+import com.example.StaffCalc.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 public class AuthController {
 
     private final UserRepository userRepository;
 
+    private final UserService userService;
+
+
+
 
     @Autowired
-    public AuthController( UserRepository userRepository) {
+    public AuthController( UserRepository userRepository, UserService userService) {
         this.userRepository = userRepository;
+        this.userService = userService;
     }
+
 
 
 
@@ -33,24 +45,35 @@ public class AuthController {
     public String addUser(@RequestParam String name, RedirectAttributes redirectAttributes) {
         User newUser = new User(name);
         userRepository.save(newUser);
-
         redirectAttributes.addFlashAttribute("message", "User added successfully");
         return "redirect:/list";
     }
 
     @GetMapping("/editUser/{id}")
     public String editUserForm(@PathVariable Long id, Model model) {
-        User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
         model.addAttribute("user", user);
         return "editUser";
     }
 
     @PostMapping("/editUser/{id}")
-    public String editUser(@PathVariable Long id, @RequestParam String name, RedirectAttributes redirectAttributes) {
-        User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
+    public String editUser(@PathVariable Long id,
+                           @RequestParam String name,
+                           @RequestParam(value = "workingDates", required = false) List<String> workingDates,
+                           RedirectAttributes redirectAttributes) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
         user.setName(name);
-        userRepository.save(user);
 
+        if (workingDates != null) {
+            Set<LocalDate> parsedDates = workingDates.stream()
+                    .map(date -> LocalDate.parse(date, DateTimeFormatter.ofPattern("dd-MM-yyyy")))
+                    .collect(Collectors.toSet());
+            user.setWorkingDates(parsedDates);
+        }
+
+        userRepository.save(user);
         redirectAttributes.addFlashAttribute("message", "User updated successfully");
         return "redirect:/list";
     }
@@ -58,61 +81,11 @@ public class AuthController {
     @GetMapping("/deleteUser/{id}")
     public String deleteUser(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         userRepository.deleteById(id);
-
         redirectAttributes.addFlashAttribute("message", "User deleted successfully");
         return "redirect:/list";
     }
 
 
-    /*@GetMapping("/register")
-    public String showRegisterForm(Model model){
-        UserDto user = new UserDto();
-        model.addAttribute("user", user);
-        return "register";
-    }
 
-    @PostMapping("/register/save")
-    public String registration(@Valid @ModelAttribute("user") UserDto userDto, BindingResult result, Model model){
-        User existingUser = userService.findUserByEmail(userDto.getEmail());
 
-        if (existingUser != null && existingUser.getEmail() != null && !existingUser.getEmail().isEmpty()){
-            result.rejectValue("email", null, "there is already registered email");
-        }
-        if (result.hasErrors()){
-            model.addAttribute("user", userDto);
-            return "/register";
-        }
-        userService.saveUser(userDto);
-        return "redirect:/register?success";
-    }
-
-    @GetMapping("/users")
-    public String users(Model model){
-        List<UserDto> users = userService.findAllUsers();
-        model.addAttribute("users", users);
-        return "users";
-    }
-
-    @GetMapping("/login")
-    public String login(){
-        return "login";
-    }
-*/
-   /* @GetMapping("/admin/createUser")
-    public String showCreateUserForm(Model model){
-        UserDto userDto = new UserDto();
-        model.addAttribute("user", userDto);
-        return "createUser";
-    }
-
-    @PostMapping("/admin/saveUser")
-    public String saveUserByAdmin(@Valid @ModelAttribute("user") UserDto userDto, BindingResult bindingResult){
-        if (bindingResult.hasErrors()){
-            return "createUser";
-        }
-        userService.saveUserByAdmin(userDto);
-        return "redirect:/users";
-    }
-
-    */
 }

@@ -1,26 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User List</title>
+</head>
 <body>
 <h1>User List</h1>
 
-
-<!-- Добавьте блок для отображения сообщения -->
 <div th:if="${message}" th:text="${message}" style="color: green;"></div>
-
+<a class="nav-link active" aria-current="page" th:href="@{/logout}">Logout</a>
 <form action="/addUser" method="post">
     <label>Name: </label>
     <input type="text" id="userName" name="name" required>
     <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
     <button type="submit">Add User</button>
 </form>
-
-<!-- Остальной код остается без изменений -->
 <table>
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Work Dates</th>
+        <th>Action</th>
+    </tr>
+    </thead>
     <tbody>
     <tr th:each="user : ${users}">
         <td th:text="${user.name}"></td>
-        <td><a th:href="@{/deleteUser/{id}(id=${user.id})}">Delete </a></td>
-        <td><a th:href="@{/editUser/{id}(id=${user.id})}">Edit </a></td>
-        <p>fdsf</p>
+        <td>
+    <span th:each="date, iterStat : ${user.workingDates}">
+        <span th:text="${#temporals.format(date, 'dd-MM-yyyy')}"></span><br>
+        <th:block th:if="${!iterStat.last}">,</th:block>
+    </span>
+        </td>
+        <td>
+            <a th:href="@{/editUser/{id}(id=${user.id})}">Edit</a>
+            <a th:href="@{/deleteUser/{id}(id=${user.id})}">Delete</a>
+        </td>
     </tr>
     </tbody>
 </table>
 </body>
+</html>

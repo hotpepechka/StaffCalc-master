@@ -2,7 +2,11 @@ package com.example.StaffCalc.models;
 import jakarta.persistence.*;
 import lombok.*;
 import java.io.Serializable;
+import java.time.LocalDate;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 
 @Getter
@@ -20,12 +24,18 @@ public class User implements Serializable{
     @Column(nullable = false)
     private String name;
 
+    @ElementCollection
+    @CollectionTable(name = "user_working_dates", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "working_date")
+    private Set<LocalDate> workingDates = new HashSet<>();
+
 
     public User(String name) {
         this.name = name;
     }
 
-    // Getter and setter methods
+
+
 
 
 }

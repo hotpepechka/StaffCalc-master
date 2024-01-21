@@ -3,6 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-ui-multidatespicker/1.6.6/jquery-ui.multidatespicker.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#workingDates").multiDatesPicker({
+                dateFormat: 'dd-mm-yy',
+                showButtonPanel: true,
+                changeMonth: true,
+                changeYear: true,
+                numberOfMonths: 2,
+                onSelect: function (selectedDate) {
+                    var formattedDate = moment(selectedDate, 'DD-MM-YYYY').format('DD-MM-YY');
+                    // Дополнительные действия при выборе даты, если нужно
+                }
+            });
+        });
+    </script>
+
+
     <title>Edit User</title>
 </head>
 <body>
@@ -10,15 +32,26 @@
 <h2>Edit User</h2>
 
 <form th:action="@{'/editUser/' + ${user.id}}" method="post">
+    <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+
     <label for="name">Name:</label>
     <input type="text" id="name" name="name" th:value="${user.name}" required>
 
     <input type="hidden" id="id" name="id" th:value="${user.id}">
 
-    <button type="submit">Save</button>
+    <label for="workingDates">Working Dates (comma-separated): </label>
+    <input type="text" id="workingDates" name="workingDates"  />
+
+    <table>
+        <tr th:each="date: ${user.workingDates}">
+            <td><p th:text="${date}"></p></td>
+        </tr>
+    </table>
+    <button type="submit">Save Changes</button>
 </form>
 
 <a href="/list">Back to User List</a>
+
 
 </body>
 </html>
