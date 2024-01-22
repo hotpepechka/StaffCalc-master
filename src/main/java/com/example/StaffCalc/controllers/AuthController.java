@@ -22,7 +22,7 @@ public class AuthController {
 
     private final UserService userService;
 
-
+    public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
 
     @Autowired
@@ -61,27 +61,34 @@ public class AuthController {
     public String editUser(@PathVariable Long id,
                            @RequestParam String name,
                            @RequestParam(value = "workingDates", required = false) List<String> workingDates,
+                           @RequestParam(value = "removeDate", required = false) String removeDate,
+                           @RequestParam(value = "removeAllDates", required = false) boolean removeAllDates,
                            RedirectAttributes redirectAttributes) {
+
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
-        user.setName(name);
 
-        if (workingDates != null) {
-            Set<LocalDate> parsedDates = workingDates.stream()
-                    .map(date -> LocalDate.parse(date, DateTimeFormatter.ofPattern("dd-MM-yyyy")))
-                    .collect(Collectors.toSet());
-            user.setWorkingDates(parsedDates);
+        if (removeAllDates) {
+            // Remove all dates if the parameter is present
+            user.getWorkingDates().clear();
+        } else if (removeDate != null) {
+            // Remove the specified date from workingDates
+            LocalDate dateToRemove = LocalDate.parse(removeDate, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            user.getWorkingDates().remove(dateToRemove);
+        } else {
+            // Update user details if not removing a date or all dates
+            user.setName(name);
+
+            if (workingDates != null) {
+                Set<LocalDate> parsedDates = workingDates.stream()
+                        .map(date -> LocalDate.parse(date, DateTimeFormatter.ofPattern("dd-MM-yyyy")))
+                        .collect(Collectors.toSet());
+                user.setWorkingDates(parsedDates);
+            }
         }
 
         userRepository.save(user);
         redirectAttributes.addFlashAttribute("message", "User updated successfully");
-        return "redirect:/list";
-    }
-
-    @GetMapping("/deleteUser/{id}")
-    public String deleteUser(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        userRepository.deleteById(id);
-        redirectAttributes.addFlashAttribute("message", "User deleted successfully");
         return "redirect:/list";
     }
 
