@@ -1,26 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User List</title>
+</head>
 <body>
 <h1>User List</h1>
 
-
-<!-- Добавьте блок для отображения сообщения -->
 <div th:if="${message}" th:text="${message}" style="color: green;"></div>
-
+<a class="nav-link active" aria-current="page" th:href="@{/logout}">Logout</a>
 <form action="/addUser" method="post">
     <label>Name: </label>
     <input type="text" id="userName" name="name" required>
     <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
     <button type="submit">Add User</button>
 </form>
+<form action="/list" method="get">
+    <label for="month">Выберите месяц: </label>
+        <select id="month" name="month">
 
-<!-- Остальной код остается без изменений -->
-<table>
+            <option th:each="m :${#numbers.sequence(1, 12)}"
+                    th:value="${m}"
+                    th:text="${(m)}"
+                    th:selected="${m == selectedMonth}"></option>
+        </select>
+    <label for="year">Выберите год: </label>
+    <select id="year" name="year">
+        <option th:each="i : ${#numbers.sequence(T(java.time.Year).now().value - 5, T(java.time.Year).now().value)}" th:value="${T(java.lang.Integer).toString(i)}" th:text="${i}"></option>
+        <option th:each="y : ${#numbers.sequence(2019, 2030)}"
+                th:value="${y}"
+                th:text="${y}"
+                th:selected="${y == selectedYear}"></option>
+    </select>
+    <button type="submit">Применить</button>
+</form>
+<h3 th:text="${#temporals.format(startDate, 'MMMM yyyy')}"></h3><table>
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Work Dates</th>
+        <th>Money</th>
+        <th>Action</th>
+    </tr>
+    </thead>
     <tbody>
     <tr th:each="user : ${users}">
         <td th:text="${user.name}"></td>
-        <td><a th:href="@{/deleteUser/{id}(id=${user.id})}">Delete </a></td>
-        <td><a th:href="@{/editUser/{id}(id=${user.id})}">Edit </a></td>
-        <p>fdsf</p>
+        <td>
+    <span th:each="date, iterStat : ${user.workingDates}">
+        <span th:text="${#temporals.format(date, 'dd-MM-yyyy')}"></span><br>
+        <th:block th:if="${!iterStat.last}">,</th:block>
+    </span>
+        </td>
+        <td th:text="${user.calculateIncome(startDate, endDate, incomePerShift)}"></td>
+        <td>
+            <a th:href="@{/editUser/{id}(id=${user.id})}">Edit</a>
+            <a th:href="@{/deleteUser/{id}(id=${user.id})}">Delete</a>
+        </td>
     </tr>
     </tbody>
 </table>
 </body>
+</html>
