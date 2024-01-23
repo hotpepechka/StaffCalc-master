@@ -9,6 +9,7 @@
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-ui-multidatespicker/1.6.6/jquery-ui.multidatespicker.js"></script>
     <script>
+        //выбор дат
         $(document).ready(function () {
             $("#workingDates").multiDatesPicker({
                 dateFormat: 'dd-mm-yy',
@@ -18,10 +19,32 @@
                 numberOfMonths: 2,
                 onSelect: function (selectedDate) {
                     var formattedDate = moment(selectedDate, 'DD-MM-YYYY').format('DD-MM-YY');
-                    // Дополнительные действия при выборе даты, если нужно
                 }
             });
         });
+        // удаление выбранной даты
+        function removeDate(button) {
+            var row = button.parentNode.parentNode;
+            var dateToRemove = row.cells[0].innerText;
+
+            var hiddenInput = document.getElementById("workingDates");
+            var currentDates = hiddenInput.value.split(',');
+            var updatedDates = currentDates.filter(date => date.trim() !== dateToRemove.trim());
+            hiddenInput.value = updatedDates.join(',');
+
+            row.parentNode.removeChild(row);
+        }
+        // удаление всех дат
+        function removeAllDates() {
+            var hiddenInput = document.getElementById("workingDates");
+            hiddenInput.value = "";
+
+            var table = document.querySelector("table");
+            var rows = table.getElementsByTagName("tr");
+            while (rows.length > 0) {
+                table.deleteRow(0);
+            }
+        }
     </script>
 
 
@@ -45,7 +68,7 @@
     <table>
         <tr th:each="date: ${user.workingDates}">
             <td>
-                <p th:text="${date}"></p>
+                <span th:text="${date}"></span>
                 <button type="button" onclick="removeDate(this)">Remove</button>
             </td>
         </tr>
@@ -58,31 +81,5 @@
 
 
 </body>
-<script>
-    function removeDate(button) {
-        var row = button.parentNode.parentNode;
-        var dateToRemove = row.cells[0].innerText;
 
-        // Update the hidden input field (if needed)
-        var hiddenInput = document.getElementById("workingDates");
-        var currentDates = hiddenInput.value.split(',');
-        var updatedDates = currentDates.filter(date => date.trim() !== dateToRemove.trim());
-        hiddenInput.value = updatedDates.join(',');
-
-        // Remove the row from the table
-        row.parentNode.removeChild(row);
-    }
-    function removeAllDates() {
-        // Update the hidden input field (if needed)
-        var hiddenInput = document.getElementById("workingDates");
-        hiddenInput.value = "";  // Set the value to an empty string
-
-        // Remove all rows from the table
-        var table = document.querySelector("table");
-        var rows = table.getElementsByTagName("tr");
-        while (rows.length > 0) {
-            table.deleteRow(0);
-        }
-    }
-</script>
 </html>

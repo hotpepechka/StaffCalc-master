@@ -3,11 +3,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.io.Serializable;
 import java.time.LocalDate;
-
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-
 
 @Getter
 @Setter
@@ -34,7 +31,13 @@ public class User implements Serializable{
         this.name = name;
     }
 
+    public double calculateIncome(LocalDate startDate, LocalDate endDate, double incomePerShift){
+        long numberOfShift = workingDates.stream()
+                .filter(date -> date.isAfter(startDate.minusDays(1)) && date.isBefore(endDate.plusDays(1)))
+                .count();
 
+        return numberOfShift * incomePerShift;
+    }
 
 
 

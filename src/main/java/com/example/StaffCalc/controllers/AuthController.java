@@ -4,11 +4,9 @@ import com.example.StaffCalc.repository.UserRepository;
 import com.example.StaffCalc.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -24,22 +22,30 @@ public class AuthController {
 
     public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
-
     @Autowired
     public AuthController( UserRepository userRepository, UserService userService) {
         this.userRepository = userRepository;
         this.userService = userService;
     }
 
-
-
-
     @GetMapping("/list")
-    public String list(Model model) {
+    public String list(Model model, @RequestParam(required = false, defaultValue = "1") int month, @RequestParam(required = false, defaultValue = "2024") int year) {
         List<User> users = userRepository.findAll();
         model.addAttribute("users", users);
+
+        LocalDate startDate = LocalDate.of(year, month, 15);
+        LocalDate endDate = startDate.plusMonths(1).minusDays(1);
+        double incomePerShift = 50;
+
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        model.addAttribute("incomePerShift", incomePerShift);
+        model.addAttribute("selectedMonth", month);
+        model.addAttribute("selectedYear", year);
+
         return "users";
     }
+
 
     @PostMapping("/addUser")
     public String addUser(@RequestParam String name, RedirectAttributes redirectAttributes) {
@@ -69,14 +75,11 @@ public class AuthController {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
 
         if (removeAllDates) {
-            // Remove all dates if the parameter is present
             user.getWorkingDates().clear();
         } else if (removeDate != null) {
-            // Remove the specified date from workingDates
             LocalDate dateToRemove = LocalDate.parse(removeDate, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
             user.getWorkingDates().remove(dateToRemove);
         } else {
-            // Update user details if not removing a date or all dates
             user.setName(name);
 
             if (workingDates != null) {
@@ -89,6 +92,14 @@ public class AuthController {
 
         userRepository.save(user);
         redirectAttributes.addFlashAttribute("message", "User updated successfully");
+        return "redirect:/list";
+    }
+
+    @GetMapping("/deleteUser/{id}")
+    public String deleteUser(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        userRepository.deleteById(id);
+
+        redirectAttributes.addFlashAttribute("message", "User deleted successfully");
         return "redirect:/list";
     }
 

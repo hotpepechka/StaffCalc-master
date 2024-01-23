@@ -16,11 +16,31 @@
     <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
     <button type="submit">Add User</button>
 </form>
-<table>
+<form action="/list" method="get">
+    <label for="month">Выберите месяц: </label>
+        <select id="month" name="month">
+
+            <option th:each="m :${#numbers.sequence(1, 12)}"
+                    th:value="${m}"
+                    th:text="${(m)}"
+                    th:selected="${m == selectedMonth}"></option>
+        </select>
+    <label for="year">Выберите год: </label>
+    <select id="year" name="year">
+        <option th:each="i : ${#numbers.sequence(T(java.time.Year).now().value - 5, T(java.time.Year).now().value)}" th:value="${T(java.lang.Integer).toString(i)}" th:text="${i}"></option>
+        <option th:each="y : ${#numbers.sequence(2019, 2030)}"
+                th:value="${y}"
+                th:text="${y}"
+                th:selected="${y == selectedYear}"></option>
+    </select>
+    <button type="submit">Применить</button>
+</form>
+<h3 th:text="${#temporals.format(startDate, 'MMMM yyyy')}"></h3><table>
     <thead>
     <tr>
         <th>Name</th>
         <th>Work Dates</th>
+        <th>Money</th>
         <th>Action</th>
     </tr>
     </thead>
@@ -33,6 +53,7 @@
         <th:block th:if="${!iterStat.last}">,</th:block>
     </span>
         </td>
+        <td th:text="${user.calculateIncome(startDate, endDate, incomePerShift)}"></td>
         <td>
             <a th:href="@{/editUser/{id}(id=${user.id})}">Edit</a>
             <a th:href="@{/deleteUser/{id}(id=${user.id})}">Delete</a>
