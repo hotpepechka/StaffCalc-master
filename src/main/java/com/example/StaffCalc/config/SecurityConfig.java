@@ -1,4 +1,6 @@
 package com.example.StaffCalc.config;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,13 +32,17 @@ public class SecurityConfig {
                             authorize.anyRequest().authenticated();
                         }).formLogin(
                         form -> form
-                                .defaultSuccessUrl("/list")
+                                .defaultSuccessUrl("/list", true)
                                    .permitAll()
+
                 ).logout(logout -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
                         .permitAll());
 
         return http.build();
+    }
+    private boolean is404(HttpServletRequest request) {
+        return (Integer) request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE) == 404;
     }
 
     @Bean

@@ -48,10 +48,10 @@
     <tr th:each="user : ${users}">
         <td th:text="${user.name}"></td>
         <td>
-    <span th:each="date, iterStat : ${user.workingDates}">
-        <span th:text="${#temporals.format(date, 'dd-MM-yyyy')}"></span><br>
-        <th:block th:if="${!iterStat.last}">,</th:block>
-    </span>
+            <span th:each="date, iterStat : ${user.workingDates}">
+<span th:text="${#temporals.format(date, 'dd-MM-yyyy')}"></span><br>
+                <th:block th:if="${!iterStat.last}">,</th:block>
+            </span>
         </td>
         <td th:text="${user.calculateIncome(startDate, endDate, incomePerShift)}"></td>
         <td>
@@ -60,6 +60,7 @@
         </td>
     </tr>
     </tbody>
+
 </table>
 </body>
 </html>
