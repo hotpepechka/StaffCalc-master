@@ -99,7 +99,6 @@ public class Tests {
 
         key1.setField1("test2");
         System.out.println(map.get(key1) + "/" + map.get(key2));
-
     }
 
     @Data
