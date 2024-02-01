@@ -10,9 +10,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Set;
+import java.time.format.DateTimeParseException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -26,6 +27,8 @@ public class AuthController {
 
     public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
+    private final String[] russianMonths = {"Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"};
+
     @Autowired
     public AuthController( UserRepository userRepository, UserService userService) {
         this.userRepository = userRepository;
@@ -34,22 +37,37 @@ public class AuthController {
 
 
     @GetMapping("/list")
-    public String list(Model model, @RequestParam(required = false, defaultValue = "1") int month, @RequestParam(required = false, defaultValue = "2024") int year) {
+    public String list(Model model, @RequestParam(required = false, defaultValue = "1") int month, @RequestParam(required = false, defaultValue = "2024") int year, @RequestParam(required = false) Integer selectedMonth,
+                       @RequestParam(required = false) Integer selectedYear) {
         List<User> users = userRepository.findAll();
         model.addAttribute("users", users);
 
+        LocalDate currentDate = LocalDate.now();
+        int currentMonth = currentDate.getMonthValue();
+        int currentYear = currentDate.getYear();
+
         LocalDate startDate = LocalDate.of(year, month, 15);
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
-        //double incomePerShift = 50;
+        List<Month> monthsList = Arrays.asList(Month.values());
 
+        Map<User, Double> incomeMap = new HashMap<>();
+        for (User user : users){
+            double income = user.getIncomeForPeriod(startDate, endDate, incomePerShift);
+            incomeMap.put(user,income);
+
+        }
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
         model.addAttribute("incomePerShift", incomePerShift);
-        model.addAttribute("selectedMonth", month);
-        model.addAttribute("selectedYear", year);
+        model.addAttribute("selectedMonth", currentMonth);
+        model.addAttribute("selectedYear", currentYear);
+        model.addAttribute("months", monthsList);
+        model.addAttribute("russianMonths", russianMonths);
+        model.addAttribute("incomeMap", incomeMap);
 
         return "users";
     }
+
 
 
     @PostMapping("/addUser")
@@ -72,35 +90,38 @@ public class AuthController {
     public String editUser(@PathVariable Long id,
                            @RequestParam String name,
                            @RequestParam(value = "workingDates", required = false) List<String> workingDates,
-                         //  @RequestParam(value = "removeDate", required = false) String removeDate,
-                         //  @RequestParam(value = "removeAllDates", required = false) boolean removeAllDates,
                            RedirectAttributes redirectAttributes) {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
 
+        user.setName(name);
 
-       /* if (removeAllDates) {
-            user.getWorkingDates().clear();
-        } else if (removeDate != null) {
-            LocalDate dateToRemove = LocalDate.parse(removeDate, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-            user.getWorkingDates().remove(dateToRemove);
-        } else {*/
-            user.setName(name);
+        if (workingDates != null) {
 
-            if (workingDates != null) {
-                Set<LocalDate> parsedDates = workingDates.stream()
-                        .map(date -> LocalDate.parse(date, DateTimeFormatter.ofPattern("dd-MM-yyyy")))
-                        .collect(Collectors.toSet());
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            Set<LocalDate> parsedDates = workingDates.stream()
+                    .filter(date -> !date.isEmpty()) // Исключаем пустые строки
+                    .flatMap(date -> Arrays.stream(date.split(", ")))
+                    .filter(date -> {
+                        try {
+                            LocalDate.parse(date, formatter);
+                            return true;
+                        } catch (DateTimeParseException e) {
+                            return false;
+                        }
+                    })
+                    .map(date -> LocalDate.parse(date, formatter))
+                    .collect(Collectors.toSet());
 
-                user.setWorkingDates(parsedDates);
-            }
-       // }
+            user.setWorkingDates(parsedDates);
+        }
 
         userRepository.save(user);
         redirectAttributes.addFlashAttribute("message", "User updated successfully");
         return "redirect:/list";
     }
+
 
     @GetMapping("/deleteUser/{id}")
     public String deleteUser(@PathVariable Long id, RedirectAttributes redirectAttributes) {
