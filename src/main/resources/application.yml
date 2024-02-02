@@ -16,5 +16,7 @@ spring:
       ddl-auto: create
 
 myapp:
-  incomePerShift: 1800
+    advancePaymentPercentage: 25
+    incomePerShift: 1800
+
 

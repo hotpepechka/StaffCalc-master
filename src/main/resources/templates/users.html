@@ -32,8 +32,8 @@
         <select id="month" name="month">
             <option th:each="month, monthIndex : ${months}"
                     th:value="${monthIndex.index + 1}"
-                    th:text="${russianMonths[monthIndex.index]}"
-                    th:selected="${monthIndex.index + 1 == (selectedMonth == null ? currentMonth : selectedMonth)}"></option>
+                    th:text="${userDTO.russianMonths[monthIndex.index]}"
+                    th:selected="${monthIndex.index + 1 == (selectedMonth == null ? currentMonth : userDTO.currentMonth)}"></option>
         </select>
 
 
@@ -42,13 +42,13 @@
             <option th:each="y : ${#numbers.sequence(2019, 2030)}"
                     th:value="${y}"
                     th:text="${y}"
-                    th:selected="${y == selectedYear}"></option>
+                    th:selected="${y == userDTO.defaultSelectedYear}"></option>
         </select>
 
         <button type="submit" class="btn btn-secondary">Применить</button>
     </form>
 
-    <h3 th:text="${#temporals.format(startDate, 'MMMM yyyy')}"></h3>
+    <h3 th:text="${#temporals.format(periodDTO.startDate, 'MMMM yyyy')}"></h3>
     <table class="table">
         <thead>
         <tr>
@@ -58,25 +58,25 @@
             <th>Действия</th>
         </tr>
         </thead>
+        <!-- ... предыдущий код ... -->
+
         <tbody>
-        <tr th:each="user : ${users}">
+        <tr th:each="user : ${userDTO.users}">
             <td th:text="${user.name}"></td>
             <td>
-                <span th:each="date, iterStat : ${user.workingDates}">
-                    <span th:text="${#temporals.format(date, 'dd-MM-yyyy')}"></span>
-                    <th:block th:if="${!iterStat.last}">, </th:block>
-                </span>
+            <span th:each="date, iterStat : ${user.workingDates}">
+                <span th:text="${#temporals.format(date, 'dd-MM-yyyy')}"></span>
+                <th:block th:if="${!iterStat.last}">, </th:block>
+            </span>
             </td>
 
-            <td th:each="entry : ${incomeMap.entrySet()}" th:if="${entry.key == user}">
+            <!-- Iterate over entries and find matching user by id -->
+            <td th:each="entry : ${userDTO.incomeMap.entrySet()}" th:if="${entry.key == user}">
                 <span th:text="${entry.value}"></span>
                 <span>
                     (Аванс: <span th:text="${user.advancePaymentAmount}"></span>)
-                </span>
-
+            </span>
             </td>
-
-
 
             <td>
                 <a th:href="@{/editUser/{id}(id=${user.id})}">Редактировать</a>
@@ -84,6 +84,9 @@
             </td>
         </tr>
         </tbody>
+
+        <!-- ... остальной код ... -->
+
     </table>
 </div>
 </body>

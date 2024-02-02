@@ -1,10 +1,11 @@
 package com.example.StaffCalc.controllers;
+import com.example.StaffCalc.dto.PeriodDTO;
 import com.example.StaffCalc.models.User;
 import com.example.StaffCalc.repository.UserRepository;
+import com.example.StaffCalc.service.PeriodService;
 import com.example.StaffCalc.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -15,56 +16,48 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
-
+import com.example.StaffCalc.dto.UserDTO;
 @Controller
 public class AuthController {
 
     private final UserRepository userRepository;
     private final UserService userService;
+    private final PeriodService periodService;
 
     @Value("${myapp.incomePerShift}")
     private double incomePerShift;
 
     public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
-    private final String[] russianMonths = {"Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"};
+
 
     @Autowired
-    public AuthController( UserRepository userRepository, UserService userService) {
+    public AuthController( UserRepository userRepository, UserService userService, PeriodService periodService) {
         this.userRepository = userRepository;
         this.userService = userService;
+        this.periodService = periodService;
     }
 
 
     @GetMapping("/list")
-    public String list(Model model, @RequestParam(required = false, defaultValue = "1") int month, @RequestParam(required = false, defaultValue = "2024") int year, @RequestParam(required = false) Integer selectedMonth,
-                       @RequestParam(required = false) Integer selectedYear) {
-        List<User> users = userRepository.findAll();
-        model.addAttribute("users", users);
+    public String list(Model model,
+                       @RequestParam(required = false, defaultValue = "1") int month,
+                       @RequestParam(required = false, defaultValue = "2024") int year) {
 
-        LocalDate currentDate = LocalDate.now();
-        int currentMonth = currentDate.getMonthValue();
-        int currentYear = currentDate.getYear();
+        PeriodDTO periodDTO = periodService.getPeriodData(month, year);
+        UserDTO userDTO = userService.getUserData(periodDTO);
 
-        LocalDate startDate = LocalDate.of(year, month, 15);
-        LocalDate endDate = startDate.plusMonths(1).minusDays(1);
-        List<Month> monthsList = Arrays.asList(Month.values());
 
-        Map<User, Double> incomeMap = new HashMap<>();
-        for (User user : users){
-            double income = user.getIncomeForPeriod(startDate, endDate, incomePerShift);
-            incomeMap.put(user,income);
+        // Get other values from the PeriodService
+        List<Month> monthsList = periodService.getMonthsList();
+        int currentMonth = periodService.getCurrentMonth();
 
-        }
-        model.addAttribute("startDate", startDate);
-        model.addAttribute("endDate", endDate);
-        model.addAttribute("incomePerShift", incomePerShift);
-        model.addAttribute("selectedMonth", currentMonth);
-        model.addAttribute("selectedYear", currentYear);
+        model.addAttribute("periodDTO", periodDTO);
+        model.addAttribute("userDTO", userDTO);
+
         model.addAttribute("months", monthsList);
-        model.addAttribute("russianMonths", russianMonths);
-        model.addAttribute("incomeMap", incomeMap);
-
+        model.addAttribute("currentMonth", currentMonth);
+        model.addAttribute("userService", userService);
         return "users";
     }
 
@@ -103,15 +96,13 @@ public class AuthController {
             Set<LocalDate> parsedDates = workingDates.stream()
                     .filter(date -> !date.isEmpty()) // Исключаем пустые строки
                     .flatMap(date -> Arrays.stream(date.split(", ")))
-                    .filter(date -> {
+                    .map(date -> {
                         try {
-                            LocalDate.parse(date, formatter);
-                            return true;
+                            return LocalDate.parse(date, formatter);
                         } catch (DateTimeParseException e) {
-                            return false;
+                            throw new IllegalArgumentException("Invalid date format: " + date);
                         }
                     })
-                    .map(date -> LocalDate.parse(date, formatter))
                     .collect(Collectors.toSet());
 
             user.setWorkingDates(parsedDates);
