@@ -62,18 +62,20 @@
                 while (rows.length > 0) {
                     table.deleteRow(0);
                 }
+
+                // Обновление значения input для отправки на сервер (пустая строка)
+                $("#workingDatesHidden").val("");
             }
+            $("#removeDatesButton").on("click", removeAllDates);
         });
     </script>
-
-
     <title>Edit User</title>
 </head>
 <body class="container">
 
 <h2 class="display-4">Edit User</h2>
 
-<form th:action="@{'/editUser/' + ${user.id}}" method="post">
+<form th:action="@{'/users/edit/' + ${user.id}}" method="post">
     <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
 
     <label for="name">Имя:</label>
@@ -93,13 +95,10 @@
         </tr>
     </table>
 
-    <button type="button" class="btn btn-danger" onclick="removeAllDates()">Удалить все даты</button>
+    <button type="button" class="btn btn-danger" id="removeDatesButton">Удалить все даты</button>
     <button class="btn btn-primary" type="submit">Сохранить изменения</button>
 </form>
 
-<a href="/list" class="btn btn-primary">Back to User List</a>
-
-
+<a href="/users" class="btn btn-primary">Back to User List</a>
 </body>
-
 </html>

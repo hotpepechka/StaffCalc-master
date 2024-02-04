@@ -18,13 +18,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 import com.example.StaffCalc.dto.UserDTO;
 @Controller
+@RequestMapping("/users")
 public class UserController {
 
     private final UserRepository userRepository;
     private final UserService userService;
     private final PeriodService periodService;
-
-
 
     @Autowired
     public UserController(UserRepository userRepository, UserService userService, PeriodService periodService) {
@@ -34,7 +33,7 @@ public class UserController {
     }
 
 
-    @GetMapping("/list")
+    @GetMapping
     public String list(Model model,
                        @RequestParam(required = false, defaultValue = "1") int month,
                        @RequestParam(required = false, defaultValue = "2024") int year) {
@@ -42,10 +41,8 @@ public class UserController {
         PeriodDTO periodDTO = periodService.getPeriodData(month, year);
         UserDTO userDTO = userService.getUserData(periodDTO);
 
-        // Добавьте объект userDTO в модель
         model.addAttribute("userDTO", userDTO);
 
-        // Get other values from the PeriodService
         List<Month> monthsList = periodService.getMonthsList();
         int currentMonth = periodService.getCurrentMonth();
 
@@ -57,17 +54,15 @@ public class UserController {
         return "users";
     }
 
-
-
     @PostMapping("/addUser")
     public String addUser(@RequestParam String name, RedirectAttributes redirectAttributes) {
         User newUser = new User(name);
         userRepository.save(newUser);
         redirectAttributes.addFlashAttribute("message", "User added successfully");
-        return "redirect:/list";
+        return "redirect:/users";
     }
 
-    @GetMapping("/editUser/{id}")
+    @GetMapping("/edit/{id}")
     public String editUserForm(@PathVariable Long id, Model model) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
@@ -75,7 +70,7 @@ public class UserController {
         return "editUser";
     }
 
-        @PostMapping("/editUser/{id}")
+        @PostMapping("/edit/{id}")
         public String editUser(@PathVariable Long id,
                                @RequestParam String name,
                                @RequestParam(value = "workingDates", required = false) String workingDatesString,
@@ -106,16 +101,16 @@ public class UserController {
 
             userRepository.save(user);
             redirectAttributes.addFlashAttribute("message", "User updated successfully");
-            return "redirect:/list";
+            return "redirect:/users";
         }
 
 
-    @GetMapping("/deleteUser/{id}")
+    @GetMapping("/delete/{id}")
     public String deleteUser(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         userRepository.deleteById(id);
 
         redirectAttributes.addFlashAttribute("message", "User deleted successfully");
-        return "redirect:/list";
+        return "redirect:/users";
     }
 
 

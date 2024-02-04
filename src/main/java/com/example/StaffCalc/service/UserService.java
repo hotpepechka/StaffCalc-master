@@ -4,6 +4,7 @@ import com.example.StaffCalc.dto.UserDTO;
 import com.example.StaffCalc.models.User;
 import com.example.StaffCalc.repository.UserRepository;
 import com.example.StaffCalc.mapper.UserConverter;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,6 @@ public class UserService {
     @Value("${myapp.advancePaymentPercentage}")
     private double advancePaymentPercentage;
 
-    private double advancePaymentAmount;
     @Autowired
     public UserService(UserRepository userRepository, PeriodService periodService) {
         this.userRepository = userRepository;
@@ -44,15 +44,15 @@ public class UserService {
         userDTO.setUsers(userDTOList);
         userDTO.setIncomeMap(incomeMap);
 
-        // Set values from PeriodService
-        userDTO.setMonthsList(periodService.getMonthsList());
-        userDTO.setCurrentMonth(periodService.getCurrentMonth());
-        userDTO.setDefaultSelectedYear(periodService.getDefaultYear());
+
+        periodDTO.setMonthsList(periodService.getMonthsList());
+        periodDTO.setCurrentMonth(periodService.getCurrentMonth());
+        periodDTO.setDefaultSelectedYear(periodService.getDefaultYear());
         return userDTO;
     }
 
 
-    // UserService.java
+
     public Map<User, Double> getIncomeMapForPeriod(List<User> users, LocalDate startDate, LocalDate endDate, double incomePerShift, UserDTO userDTO) {
         Map<User, Double> incomeMap = new HashMap<>();
         Map<User, Double> advancePaymentAmountMap = new HashMap<>();
@@ -77,10 +77,10 @@ public class UserService {
                 .filter(date -> date.isAfter(adjustedStartDate.minusDays(1)) && date.isBefore(adjustedEndDate.plusDays(1)))
                 .count();
 
-        // Рассчет суммы заработка
+        // Расчет суммы заработка
         double totalIncome = numberOfShifts * incomePerShift;
 
-        // Рассчет суммы аванса и основного платежа
+        // Расчет суммы аванса и основного платежа
         double advancePaymentAmount = totalIncome * advancePaymentPercentage / 100.0;
 
         // Устанавливаем суммы в карту advancePaymentAmountMap для каждого пользователя
@@ -89,9 +89,7 @@ public class UserService {
         // Возвращаем общую сумму (заработную плату минус аванс)
         return totalIncome - advancePaymentAmount;
     }
-    public Set<LocalDate> getWorkingDatesForMonthAndYear(User user, int month, int year) {
-        return user.getWorkingDates().stream()
-                .filter(date -> date.getMonthValue() == month && date.getYear() == year)
-                .collect(Collectors.toSet());
-    }
+
+
+
 }

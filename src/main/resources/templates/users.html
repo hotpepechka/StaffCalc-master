@@ -20,29 +20,27 @@
         </div>
     </nav>
 
-    <form action="/addUser" method="post">
+    <form action="/users/addUser" method="post">
         <label>Имя: </label>
         <input type="text" id="userName" name="name" required>
         <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
         <button type="submit" class="btn btn-primary">Добавить рабочего</button>
     </form>
 
-    <form action="/list" method="get">
+    <form action="/users" method="get">
         <label for="month">Выберите месяц: </label>
         <select id="month" name="month">
             <option th:each="month, monthIndex : ${months}"
                     th:value="${monthIndex.index + 1}"
-                    th:text="${userDTO.russianMonths[monthIndex.index]}"
-                    th:selected="${monthIndex.index + 1 == (selectedMonth == null ? currentMonth : userDTO.currentMonth)}"></option>
+                    th:text="${periodDTO.russianMonths[monthIndex.index]}"
+                    th:selected="${monthIndex.index + 1 == (selectedMonth == null ? currentMonth : periodDTO.currentMonth)}"></option>
         </select>
-
-
         <label for="year">Выберите год: </label>
         <select id="year" name="year">
             <option th:each="y : ${#numbers.sequence(2019, 2030)}"
                     th:value="${y}"
                     th:text="${y}"
-                    th:selected="${y == userDTO.defaultSelectedYear}"></option>
+                    th:selected="${y == periodDTO.defaultSelectedYear}"></option>
         </select>
 
         <button type="submit" class="btn btn-secondary">Применить</button>
@@ -58,8 +56,6 @@
             <th>Действия</th>
         </tr>
         </thead>
-        <!-- ... предыдущий код ... -->
-
         <tbody>
         <tr th:each="user : ${userDTO.users}">
             <td th:text="${user.name}"></td>
@@ -70,23 +66,18 @@
         </span>
             </td>
 
-            <!-- Iterate over entries and find matching user by id -->
             <td th:each="entry : ${userDTO.incomeMap.entrySet()}" th:if="${entry.key.id == user.id}">
                 <span th:text="${entry.value}"></span>
                 <span>
             (Аванс: <span th:text="${userDTO.advancePaymentAmountMap[entry.key]}"></span>)
         </span>
             </td>
-
         <td>
-                <a th:href="@{/editUser/{id}(id=${user.id})}">Редактировать</a>
-                <a th:href="@{/deleteUser/{id}(id=${user.id})}">Удалить</a>
+                <a th:href="@{/users/edit/{id}(id=${user.id})}">Редактировать</a>
+                <a th:href="@{/users/delete/{id}(id=${user.id})}">Удалить</a>
             </td>
         </tr>
         </tbody>
-
-        <!-- ... остальной код ... -->
-
     </table>
 </div>
 </body>

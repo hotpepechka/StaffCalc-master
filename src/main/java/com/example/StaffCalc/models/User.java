@@ -28,7 +28,7 @@ public class User implements Serializable{
     @Column(nullable = false)
     private String name;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_working_dates", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "working_date")
     private Set<LocalDate> workingDates = new HashSet<>();

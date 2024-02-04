@@ -20,16 +20,12 @@ import java.util.Set;
 @AllArgsConstructor
 public class UserDTO {
 
-    private final String[] russianMonths = {"Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-            "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"};
+
     private Long id;
     private String name;
     private Set<LocalDate> workingDates;
     private List<UserDTO> users;
     private Map<User, Double> incomeMap = new HashMap<>();
-    private List<Month> monthsList;
-    private int currentMonth;
-    private int defaultSelectedYear;
     private Map<User, Double> advancePaymentAmountMap = new HashMap<>();
 
 
