@@ -1,5 +1,5 @@
 package com.example.StaffCalc.Controllers;
-import com.example.StaffCalc.controllers.AuthController;
+import com.example.StaffCalc.controllers.UserController;
 import com.example.StaffCalc.models.User;
 import com.example.StaffCalc.repository.UserRepository;
 import com.example.StaffCalc.service.UserService;
@@ -16,8 +16,8 @@ import java.util.Arrays;
 import java.util.Optional;
 
 
-@WebMvcTest(AuthController.class)
-public class AuthControllerTest {
+@WebMvcTest(UserController.class)
+public class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

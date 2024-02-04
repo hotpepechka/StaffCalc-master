@@ -64,21 +64,21 @@
         <tr th:each="user : ${userDTO.users}">
             <td th:text="${user.name}"></td>
             <td>
-            <span th:each="date, iterStat : ${user.workingDates}">
-                <span th:text="${#temporals.format(date, 'dd-MM-yyyy')}"></span>
-                <th:block th:if="${!iterStat.last}">, </th:block>
-            </span>
+        <span th:each="date, iterStat : ${user.workingDates}">
+            <span th:text="${#temporals.format(date, 'dd-MM-yyyy')}"></span>
+            <th:block th:if="${!iterStat.last}">, </th:block>
+        </span>
             </td>
 
             <!-- Iterate over entries and find matching user by id -->
-            <td th:each="entry : ${userDTO.incomeMap.entrySet()}" th:if="${entry.key == user}">
+            <td th:each="entry : ${userDTO.incomeMap.entrySet()}" th:if="${entry.key.id == user.id}">
                 <span th:text="${entry.value}"></span>
                 <span>
-                    (Аванс: <span th:text="${user.advancePaymentAmount}"></span>)
-            </span>
+            (Аванс: <span th:text="${userDTO.advancePaymentAmountMap[entry.key]}"></span>)
+        </span>
             </td>
 
-            <td>
+        <td>
                 <a th:href="@{/editUser/{id}(id=${user.id})}">Редактировать</a>
                 <a th:href="@{/deleteUser/{id}(id=${user.id})}">Удалить</a>
             </td>

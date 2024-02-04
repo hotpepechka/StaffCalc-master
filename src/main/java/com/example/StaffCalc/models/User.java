@@ -33,22 +33,10 @@ public class User implements Serializable{
     @Column(name = "working_date")
     private Set<LocalDate> workingDates = new HashSet<>();
 
-
-    @Value("${myapp.advancePaymentPercentage}")
-    private double advancePaymentPercentage;
-
-    @org.springframework.beans.factory.annotation.Value("${myapp.incomePerShift}")
-    private double incomePerShift;
-
-
-    private double advancePaymentAmount;
     public User(String name) {
         this.name = name;
 
     }
-
-
-
 
 }
 

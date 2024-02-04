@@ -14,11 +14,18 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js" integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+" crossorigin="anonymous"></script>
     <script>
         $(document).ready(function () {
+            var userId = $("#id").val();
+
             // При загрузке страницы устанавливаем значения в поле ввода workingDates
-            var userId = $("#id").val();  // Получаем идентификатор пользователя
             var storedDates = localStorage.getItem('workingDates_' + userId);
             if (storedDates) {
                 $("#workingDates").val(storedDates);
+
+                // Обновляем значение скрытого поля в нужном формате при загрузке страницы
+                var formattedDates = storedDates.split(',').map(function(date) {
+                    return moment(date.trim(), 'DD-MM-YYYY').format('DD-MM-YYYY');
+                }).join(', ');
+                $("#workingDatesHidden").val(formattedDates);
             }
 
             // Инициализация multiDatesPicker
@@ -29,8 +36,8 @@
                 changeYear: true,
                 numberOfMonths: 2,
                 onSelect: function (selectedDate) {
-                    var formattedDate = moment(selectedDate, 'DD-MM-YYYY').format('DD-MM-YY');
-                    // Сохранение выбранных дат в localStorage с уникальным ключом
+                    var formattedDate = moment(selectedDate, 'DD-MM-YYYY').format('DD-MM-YYYY');
+
                     var currentDates = $("#workingDates").val();
                     localStorage.setItem('workingDates_' + userId, currentDates);
 
@@ -38,25 +45,25 @@
                     $("#workingDatesHidden").val(currentDates);
                 }
             });
-        });
 
-        // удаление всех дат
-        function removeAllDates() {
-            var userId = $("#id").val();  // Получаем идентификатор пользователя
+            // удаление всех дат
+            function removeAllDates() {
+                var userId = $("#id").val();  // Получаем идентификатор пользователя
 
-            // Очистка localStorage с уникальным ключом
-            localStorage.removeItem('workingDates_' + userId);
+                // Очистка localStorage с уникальным ключом
+                localStorage.removeItem('workingDates_' + userId);
 
-            // Очистка поля ввода
-            $("#workingDates").val("");
+                // Очистка поля ввода
+                $("#workingDates").val("");
 
-            // Очистка таблицы
-            var table = document.querySelector("table");
-            var rows = table.getElementsByTagName("tr");
-            while (rows.length > 0) {
-                table.deleteRow(0);
+                // Очистка таблицы
+                var table = document.querySelector("table");
+                var rows = table.getElementsByTagName("tr");
+                while (rows.length > 0) {
+                    table.deleteRow(0);
+                }
             }
-        }
+        });
     </script>
 
 
@@ -69,14 +76,15 @@
 <form th:action="@{'/editUser/' + ${user.id}}" method="post">
     <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
 
-    <label for="name">Name:</label>
+    <label for="name">Имя:</label>
     <input type="text" id="name" name="name" th:value="${user.name}" required>
 
     <input type="hidden" id="id" name="id" th:value="${user.id}">
 
-    <label for="workingDates">Working Dates (comma-separated): </label>
-        <input type="text" id="workingDates" name="workingDates"  />
-        <input type="hidden" id="workingDatesHidden" name="workingDates" th:value="${user.workingDates}" />
+    <label for="workingDates">Рабочие даты (разделенные запятыми): </label>
+    <input type="text" id="workingDates" name="workingDates" th:value="${#strings.arrayJoin(user.workingDates, ',')}" />
+    <input type="hidden" id="workingDatesHidden" name="workingDates" th:value="${#strings.arrayJoin(user.workingDates, ',')}" />
+
     <table>
         <tr th:each="date: ${user.workingDates}">
             <td>
@@ -84,8 +92,9 @@
             </td>
         </tr>
     </table>
-    <button type="button" class="btn btn-danger" onclick="removeAllDates()">Remove All Dates</button>
-    <button class="btn btn-primary" type="submit">Save Changes</button>
+
+    <button type="button" class="btn btn-danger" onclick="removeAllDates()">Удалить все даты</button>
+    <button class="btn btn-primary" type="submit">Сохранить изменения</button>
 </form>
 
 <a href="/list" class="btn btn-primary">Back to User List</a>

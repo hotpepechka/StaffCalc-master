@@ -18,21 +18,16 @@ import java.util.*;
 import java.util.stream.Collectors;
 import com.example.StaffCalc.dto.UserDTO;
 @Controller
-public class AuthController {
+public class UserController {
 
     private final UserRepository userRepository;
     private final UserService userService;
     private final PeriodService periodService;
 
-    @Value("${myapp.incomePerShift}")
-    private double incomePerShift;
-
-    public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-
 
 
     @Autowired
-    public AuthController( UserRepository userRepository, UserService userService, PeriodService periodService) {
+    public UserController(UserRepository userRepository, UserService userService, PeriodService periodService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.periodService = periodService;
@@ -47,17 +42,18 @@ public class AuthController {
         PeriodDTO periodDTO = periodService.getPeriodData(month, year);
         UserDTO userDTO = userService.getUserData(periodDTO);
 
+        // Добавьте объект userDTO в модель
+        model.addAttribute("userDTO", userDTO);
 
         // Get other values from the PeriodService
         List<Month> monthsList = periodService.getMonthsList();
         int currentMonth = periodService.getCurrentMonth();
 
         model.addAttribute("periodDTO", periodDTO);
-        model.addAttribute("userDTO", userDTO);
-
         model.addAttribute("months", monthsList);
         model.addAttribute("currentMonth", currentMonth);
         model.addAttribute("userService", userService);
+
         return "users";
     }
 
@@ -79,39 +75,39 @@ public class AuthController {
         return "editUser";
     }
 
-    @PostMapping("/editUser/{id}")
-    public String editUser(@PathVariable Long id,
-                           @RequestParam String name,
-                           @RequestParam(value = "workingDates", required = false) List<String> workingDates,
-                           RedirectAttributes redirectAttributes) {
+        @PostMapping("/editUser/{id}")
+        public String editUser(@PathVariable Long id,
+                               @RequestParam String name,
+                               @RequestParam(value = "workingDates", required = false) String workingDatesString,
+                               RedirectAttributes redirectAttributes) {
 
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
 
-        user.setName(name);
+            user.setName(name);
 
-        if (workingDates != null) {
+            if (workingDatesString != null && !workingDatesString.isEmpty()) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+                Set<LocalDate> parsedDates = Arrays.stream(workingDatesString.split(","))
+                        .map(date -> {
+                            try {
+                                return LocalDate.parse(date.trim(), formatter);
+                            } catch (DateTimeParseException e) {
+                                throw new IllegalArgumentException("Invalid date format: " + date);
+                            }
+                        })
+                        .collect(Collectors.toSet());
 
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-            Set<LocalDate> parsedDates = workingDates.stream()
-                    .filter(date -> !date.isEmpty()) // Исключаем пустые строки
-                    .flatMap(date -> Arrays.stream(date.split(", ")))
-                    .map(date -> {
-                        try {
-                            return LocalDate.parse(date, formatter);
-                        } catch (DateTimeParseException e) {
-                            throw new IllegalArgumentException("Invalid date format: " + date);
-                        }
-                    })
-                    .collect(Collectors.toSet());
+                user.setWorkingDates(parsedDates);
+            } else {
 
-            user.setWorkingDates(parsedDates);
+                user.setWorkingDates(Collections.emptySet());
+            }
+
+            userRepository.save(user);
+            redirectAttributes.addFlashAttribute("message", "User updated successfully");
+            return "redirect:/list";
         }
-
-        userRepository.save(user);
-        redirectAttributes.addFlashAttribute("message", "User updated successfully");
-        return "redirect:/list";
-    }
 
 
     @GetMapping("/deleteUser/{id}")

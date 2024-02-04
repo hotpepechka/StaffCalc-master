@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,17 +25,12 @@ public class UserDTO {
     private Long id;
     private String name;
     private Set<LocalDate> workingDates;
-
-
-    private double incomePerShift;
-    private List<User> users;
-    private Map<User, Double> incomeMap;
-
-    // Add new fields
+    private List<UserDTO> users;
+    private Map<User, Double> incomeMap = new HashMap<>();
     private List<Month> monthsList;
     private int currentMonth;
     private int defaultSelectedYear;
-    private double advancePaymentAmount;
+    private Map<User, Double> advancePaymentAmountMap = new HashMap<>();
 
 
 

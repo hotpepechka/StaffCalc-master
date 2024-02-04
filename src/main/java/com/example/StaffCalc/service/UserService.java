@@ -3,6 +3,7 @@ import com.example.StaffCalc.dto.PeriodDTO;
 import com.example.StaffCalc.dto.UserDTO;
 import com.example.StaffCalc.models.User;
 import com.example.StaffCalc.repository.UserRepository;
+import com.example.StaffCalc.mapper.UserConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -35,9 +36,12 @@ public class UserService {
 
     public UserDTO getUserData(PeriodDTO periodDTO) {
         List<User> users = userRepository.findAll();
-        UserDTO userDTO = new UserDTO();  // Declare userDTO here
+        List<UserDTO> userDTOList = UserConverter.convertToUserDTOList(users);
+        UserDTO userDTO = new UserDTO();
+
         Map<User, Double> incomeMap = getIncomeMapForPeriod(users, periodDTO.getStartDate(), periodDTO.getEndDate(), incomePerShift, userDTO);
-        userDTO.setUsers(users);
+
+        userDTO.setUsers(userDTOList);
         userDTO.setIncomeMap(incomeMap);
 
         // Set values from PeriodService
@@ -48,7 +52,22 @@ public class UserService {
     }
 
 
-    public double calculateIncome(User user, LocalDate startDate, LocalDate endDate, double incomePerShift) {
+    // UserService.java
+    public Map<User, Double> getIncomeMapForPeriod(List<User> users, LocalDate startDate, LocalDate endDate, double incomePerShift, UserDTO userDTO) {
+        Map<User, Double> incomeMap = new HashMap<>();
+        Map<User, Double> advancePaymentAmountMap = new HashMap<>();
+
+        for (User user : users) {
+            double incomeForUser = calculateIncome(user, startDate, endDate, incomePerShift, advancePaymentAmountMap);
+
+            incomeMap.put(user, incomeForUser);
+        }
+        userDTO.setAdvancePaymentAmountMap(advancePaymentAmountMap);
+
+        return incomeMap;
+    }
+
+    public double calculateIncome(User user, LocalDate startDate, LocalDate endDate, double incomePerShift, Map<User, Double> advancePaymentAmountMap) {
         // Настройка даты начала и окончания периода
         LocalDate adjustedStartDate = startDate.minusMonths(1).withDayOfMonth(15);
         LocalDate adjustedEndDate = endDate.minusMonths(1).withDayOfMonth(14);
@@ -63,23 +82,12 @@ public class UserService {
 
         // Рассчет суммы аванса и основного платежа
         double advancePaymentAmount = totalIncome * advancePaymentPercentage / 100.0;
-        user.setAdvancePaymentAmount(advancePaymentAmount);
-        // Рассчет основного платежа для предыдущего месяца
-        double mainPaymentAmount = numberOfShifts * incomePerShift - advancePaymentAmount;
+
+        // Устанавливаем суммы в карту advancePaymentAmountMap для каждого пользователя
+        advancePaymentAmountMap.put(user, advancePaymentAmount);
 
         // Возвращаем общую сумму (заработную плату минус аванс)
         return totalIncome - advancePaymentAmount;
-    }
-
-    public Map<User, Double> getIncomeMapForPeriod(List<User> users, LocalDate startDate, LocalDate endDate, double incomePerShift, UserDTO userDTO) {
-        Map<User, Double> incomeMap = new HashMap<>();
-
-        for (User user : users) {
-            double incomeForUser = calculateIncome(user, startDate, endDate, incomePerShift);
-            incomeMap.put(user, incomeForUser);
-        }
-
-        return incomeMap;
     }
     public Set<LocalDate> getWorkingDatesForMonthAndYear(User user, int month, int year) {
         return user.getWorkingDates().stream()
