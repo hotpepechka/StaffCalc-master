@@ -35,10 +35,17 @@ public class UserController {
 
     @GetMapping
     public String list(Model model,
-                       @RequestParam(required = false, defaultValue = "1") int month,
-                       @RequestParam(required = false, defaultValue = "2024") int year) {
+                       @RequestParam(required = false) Integer month,
+                       @RequestParam(required = false) Integer year) {
 
-        PeriodDTO periodDTO = periodService.getPeriodData(month, year);
+        int defaultMonth = LocalDate.now().getMonthValue();
+        int defaultYear = LocalDate.now().getYear();
+
+        // Use provided values or defaults if not provided
+        int resolvedMonth = (month != null) ? month : defaultMonth;
+        int resolvedYear = (year != null) ? year : defaultYear;
+
+        PeriodDTO periodDTO = periodService.getPeriodData(resolvedMonth, resolvedYear);
         UserDTO userDTO = userService.getUserData(periodDTO);
 
         model.addAttribute("userDTO", userDTO);
@@ -53,6 +60,8 @@ public class UserController {
 
         return "users";
     }
+
+
 
     @PostMapping("/addUser")
     public String addUser(@RequestParam String name, RedirectAttributes redirectAttributes) {

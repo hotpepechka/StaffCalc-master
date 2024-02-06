@@ -62,10 +62,15 @@ public class UserService {
 
             incomeMap.put(user, incomeForUser);
         }
-        userDTO.setAdvancePaymentAmountMap(advancePaymentAmountMap);
+
+        // Создаем новый экземпляр HashMap для advancePaymentAmountMap при установке в userDTO
+        userDTO.setAdvancePaymentAmountMap(new HashMap<>(advancePaymentAmountMap));
 
         return incomeMap;
     }
+
+
+
 
     public double calculateIncome(User user, LocalDate startDate, LocalDate endDate, double incomePerShift, Map<User, Double> advancePaymentAmountMap) {
         // Настройка даты начала и окончания периода
