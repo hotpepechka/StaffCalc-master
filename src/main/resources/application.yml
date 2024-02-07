@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/users
+    username: login
+    password: pass
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+myapp:
+    advancePaymentPercentage: 25
+    incomePerShift: 1800
+
+

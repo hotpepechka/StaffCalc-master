@@ -32,7 +32,7 @@ public class SecurityConfig {
                             authorize.anyRequest().authenticated();
                         }).formLogin(
                         form -> form
-                                .defaultSuccessUrl("/list", true)
+                                .defaultSuccessUrl("/users", true)
                                    .permitAll()
 
                 ).logout(logout -> logout
