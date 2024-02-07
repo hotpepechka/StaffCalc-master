@@ -76,6 +76,9 @@ public class Tests {
 
     @Test
     public void test3(){
+        int creationSize = 10000000;
+        long startTime = System.nanoTime();
+        ArrayList<String> stringsList = new ArrayList<>(10000000);
         for (int i = 0; i < creationSize; i++) {
             stringsList.add("test" + i);
         }
@@ -95,32 +98,7 @@ public class Tests {
      * Fill for:3645 size:10000000
      * Fill for:3043 size:10000000
      */
-    @RepeatedTest(10)
-    public void test2() {
-        int creationSize = 10000000;
-        long startTime = System.nanoTime();
-        LinkedList<String> stringsList = new LinkedList<>();
-        for (int i = 0; i < creationSize; i++) {
-            stringsList.add("test" + i);
-        }
-        long endFillTime = System.nanoTime();
-        System.out.println("Fill for:" + TimeUnit.MILLISECONDS.convert(endFillTime - startTime, TimeUnit.NANOSECONDS) + " size:" + stringsList.size());
-    }
 
-    @Test
-    public void test3() {
-        HashMap<TestKey, String> map = new HashMap<TestKey, String>();
-        TestKey key1 = new TestKey("test", 1l);
-        TestKey key2 = new TestKey("test3", 2l);
-
-        map.put(key1, "value1");
-        map.put(key2, "value2");
-
-        System.out.println(map.get(key1) + "/" + map.get(key2));
-
-        key1.setField1("test2");
-        System.out.println(map.get(key1) + "/" + map.get(key2));
-    }
 
     @Data
     @AllArgsConstructor
