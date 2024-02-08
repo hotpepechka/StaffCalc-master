@@ -1,35 +1,37 @@
 package com.example.StaffCalc.service;
 
 import com.example.StaffCalc.dto.PeriodDTO;
-import org.springframework.stereotype.Service;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.Arrays;
 import java.util.List;
 
-@Service
-public class PeriodService {
+@Setter
+@Getter
+@Component
+public class PeriodUtils {
 
 
+    private static final int START_PERIOD_DATE_FOR_CALCULATE_INCOME = 15;
+    private int currentMonth;
+    private int defaultSelectedYear;
 
-    public PeriodDTO getPeriodData(int providedMonth, int providedYear) {
-        int defaultMonth = 1;  // You can adjust the default month as needed
-        int defaultYear = 2024;  // Set the default year to 2024 if not provided
+    public static PeriodDTO getPeriodForCalculateIncome(int providedMonth, int providedYear) {
 
-        // Use the provided values if they are valid, otherwise use defaults
-        int month = (providedMonth >= 1 && providedMonth <= 12) ? providedMonth : defaultMonth;
-        int year = (providedYear > 0) ? providedYear : defaultYear;
-
-        LocalDate startDate = LocalDate.of(year, month, 15);
+        LocalDate startDate = LocalDate.of(providedYear, providedMonth, START_PERIOD_DATE_FOR_CALCULATE_INCOME).minusMonths(1);
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
+
 
         List<Month> monthsList = Arrays.asList(Month.values());
 
         PeriodDTO periodDTO = new PeriodDTO();
         periodDTO.setStartDate(startDate);
         periodDTO.setEndDate(endDate);
-        periodDTO.setMonthsList(monthsList);
+
 
         return periodDTO;
     }
@@ -45,4 +47,5 @@ public class PeriodService {
     public int getDefaultYear() {
         return LocalDate.now().getYear();
     }
+
 }

@@ -2,7 +2,7 @@ package com.example.StaffCalc.controllers;
 import com.example.StaffCalc.dto.PeriodDTO;
 import com.example.StaffCalc.models.User;
 import com.example.StaffCalc.repository.UserRepository;
-import com.example.StaffCalc.service.PeriodService;
+import com.example.StaffCalc.service.PeriodUtils;
 import com.example.StaffCalc.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,13 +23,15 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final UserService userService;
-    private final PeriodService periodService;
+    private final PeriodUtils periodUtils;
 
+    @Value("${myapp.advancePaymentPercentage}")
+    private double advancePaymentPercentage;
     @Autowired
-    public UserController(UserRepository userRepository, UserService userService, PeriodService periodService) {
+    public UserController(UserRepository userRepository, UserService userService, PeriodUtils periodUtils) {
         this.userRepository = userRepository;
         this.userService = userService;
-        this.periodService = periodService;
+        this.periodUtils = periodUtils;
     }
 
 
@@ -41,22 +43,29 @@ public class UserController {
         int defaultMonth = LocalDate.now().getMonthValue();
         int defaultYear = LocalDate.now().getYear();
 
-        // Use provided values or defaults if not provided
         int resolvedMonth = (month != null) ? month : defaultMonth;
         int resolvedYear = (year != null) ? year : defaultYear;
 
-        PeriodDTO periodDTO = periodService.getPeriodData(resolvedMonth, resolvedYear);
-        UserDTO userDTO = userService.getUserData(periodDTO);
+        if(resolvedMonth < 1 || resolvedMonth > 12) {
+            throw new IllegalArgumentException("Not corrected month value");
+        }
+        if(resolvedYear < 2024) {
+            throw new IllegalArgumentException("Not corrected year value");
+        }
 
-        model.addAttribute("userDTO", userDTO);
+        PeriodDTO periodDTO = PeriodUtils.getPeriodForCalculateIncome(resolvedMonth, resolvedYear);
+        List<UserDTO> userDTOList = userService.getUsers(periodDTO);
 
-        List<Month> monthsList = periodService.getMonthsList();
-        int currentMonth = periodService.getCurrentMonth();
+        userService.calculateAdvancePayment(advancePaymentPercentage);
+
+        model.addAttribute("userDTO", userDTOList);
+
+        List<Month> monthsList = periodUtils.getMonthsList();
+        int currentMonth = periodUtils.getCurrentMonth();
 
         model.addAttribute("periodDTO", periodDTO);
         model.addAttribute("months", monthsList);
         model.addAttribute("currentMonth", currentMonth);
-        model.addAttribute("userService", userService);
 
         return "users";
     }

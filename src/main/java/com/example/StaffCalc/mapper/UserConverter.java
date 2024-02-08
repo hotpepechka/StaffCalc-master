@@ -25,9 +25,4 @@ public class UserConverter {
                 .collect(Collectors.toList());
     }
 
-    public static List<String> convertToDateStringList(Set<LocalDate> dates, DateTimeFormatter formatter) {
-        return dates.stream()
-                .map(date -> date.format(formatter))
-                .collect(Collectors.toList());
-    }
 }
