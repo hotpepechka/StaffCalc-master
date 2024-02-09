@@ -23,8 +23,6 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    private final PeriodUtils periodUtils;
-
     @Value("${myapp.incomePerShift}")
     private double incomePerShift;
 
@@ -32,10 +30,9 @@ public class UserService {
     private double advancePaymentPercentage;
 
     @Autowired
-    public UserService(UserRepository userRepository, PeriodUtils periodUtils) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.periodUtils = periodUtils;
-        this.advancePaymentPercentage = 25;
+        this.advancePaymentPercentage = getAdvancePaymentPercentage();
     }
 
     public List<UserDTO> getUsers(PeriodDTO periodDTO) {
@@ -50,10 +47,7 @@ public class UserService {
         return userDTOList;
     }
 
-
-
     public double calculateIncome(Set<LocalDate> workingDates, PeriodDTO periodDTO) {
-
 
         long numberOfShifts = workingDates.stream()
                 .filter(date -> date.isAfter(periodDTO.getStartDate().minusDays(1)) && date.isBefore(periodDTO.getEndDate().plusDays(1)))
@@ -65,7 +59,5 @@ public class UserService {
     public double calculateAdvancePayment(Double income) {
         return income * advancePaymentPercentage / 100;
     }
-
-
 
 }

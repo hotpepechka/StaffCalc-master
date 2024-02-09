@@ -23,15 +23,12 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final UserService userService;
-    private final PeriodUtils periodUtils;
 
-    @Value("${myapp.advancePaymentPercentage}")
-    private double advancePaymentPercentage;
     @Autowired
-    public UserController(UserRepository userRepository, UserService userService, PeriodUtils periodUtils) {
+    public UserController(UserRepository userRepository, UserService userService) {
         this.userRepository = userRepository;
         this.userService = userService;
-        this.periodUtils = periodUtils;
+
     }
 
 
@@ -46,22 +43,20 @@ public class UserController {
         int resolvedMonth = (month != null) ? month : defaultMonth;
         int resolvedYear = (year != null) ? year : defaultYear;
 
-        if(resolvedMonth < 1 || resolvedMonth > 12) {
+        if (resolvedMonth < 1 || resolvedMonth > 12) {
             throw new IllegalArgumentException("Not corrected month value");
         }
-        if(resolvedYear < 2024) {
+        if (resolvedYear < 2024) {
             throw new IllegalArgumentException("Not corrected year value");
         }
 
         PeriodDTO periodDTO = PeriodUtils.getPeriodForCalculateIncome(resolvedMonth, resolvedYear);
         List<UserDTO> userDTOList = userService.getUsers(periodDTO);
 
-        userService.calculateAdvancePayment(advancePaymentPercentage);
+        model.addAttribute("userDTOList", userDTOList);
 
-        model.addAttribute("userDTO", userDTOList);
-
-        List<Month> monthsList = periodUtils.getMonthsList();
-        int currentMonth = periodUtils.getCurrentMonth();
+        List<Month> monthsList = PeriodUtils.getMonthsList();
+        int currentMonth = PeriodUtils.getCurrentMonth();
 
         model.addAttribute("periodDTO", periodDTO);
         model.addAttribute("months", monthsList);

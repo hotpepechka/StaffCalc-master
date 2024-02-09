@@ -12,7 +12,6 @@ import java.util.List;
 
 @Setter
 @Getter
-@Component
 public class PeriodUtils {
 
 
@@ -25,22 +24,18 @@ public class PeriodUtils {
         LocalDate startDate = LocalDate.of(providedYear, providedMonth, START_PERIOD_DATE_FOR_CALCULATE_INCOME).minusMonths(1);
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
 
-
-        List<Month> monthsList = Arrays.asList(Month.values());
-
         PeriodDTO periodDTO = new PeriodDTO();
         periodDTO.setStartDate(startDate);
         periodDTO.setEndDate(endDate);
 
-
         return periodDTO;
     }
 
-    public List<Month> getMonthsList() {
+    public static List<Month> getMonthsList() {
         return Arrays.asList(Month.values());
     }
 
-    public int getCurrentMonth() {
+    public static int getCurrentMonth() {
         return LocalDate.now().getMonthValue();
     }
 

@@ -58,7 +58,7 @@
         </tr>
         </thead>
         <tbody>
-        <tr th:each="user : ${userDTO}">
+        <tr th:each="user : ${userDTOList}">
             <td th:text="${user.name}"></td>
             <td>
                     <span th:each="date, iterStat : ${user.workingDates}">
