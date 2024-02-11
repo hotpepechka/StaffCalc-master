@@ -24,9 +24,8 @@ public class UserDTO {
     private Long id;
     private String name;
     private Set<LocalDate> workingDates;
-    private List<UserDTO> users;
-    private Map<User, Double> incomeMap = new HashMap<>();
-    private Map<User, Double> advancePaymentAmountMap = new HashMap<>();
+    private double income;
+    private double advancePaymentAmount;
 
 
 

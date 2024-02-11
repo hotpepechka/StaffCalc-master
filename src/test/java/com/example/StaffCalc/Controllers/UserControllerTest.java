@@ -2,30 +2,20 @@ package com.example.StaffCalc.Controllers;
 import com.example.StaffCalc.controllers.UserController;
 import com.example.StaffCalc.dto.PeriodDTO;
 import com.example.StaffCalc.dto.UserDTO;
-import com.example.StaffCalc.mapper.UserConverter;
 import com.example.StaffCalc.models.User;
 import com.example.StaffCalc.repository.UserRepository;
-import com.example.StaffCalc.service.PeriodService;
+import com.example.StaffCalc.service.PeriodUtils;
 import com.example.StaffCalc.service.UserService;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.ui.Model;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -50,36 +40,46 @@ public class UserControllerTest {
     private UserService userService;
 
     @Mock
-    private PeriodService periodService;
+    private PeriodUtils periodUtils;
 
     @InjectMocks
     private UserController userController;
 
+    @Mock
+    private Model model;
+
+    @Mock
+    private RedirectAttributes redirectAttributes;
+
+    @Value("${myapp.incomePerShift}")
+    private double incomePerShift;
+
+    @Value("${myapp.advancePaymentPercentage}")
+    private double advancePaymentPercentage;
+
     @Test
-    public void testList() {
+    void testList() {
         // Arrange
-        Model model = mock(Model.class);
-        when(periodService.getPeriodData(1, 2024)).thenReturn(new PeriodDTO());
-        when(userService.getUserData(any(PeriodDTO.class))).thenReturn(new UserDTO());
-        when(periodService.getMonthsList()).thenReturn(Collections.singletonList(Month.JANUARY));
-        when(periodService.getCurrentMonth()).thenReturn(1);
+        int defaultMonth = LocalDate.now().getMonthValue();
+        int defaultYear = LocalDate.now().getYear();
+        when(periodUtils.getCurrentMonth()).thenReturn(defaultMonth);
+        when(userService.getUsers(any(PeriodDTO.class))).thenReturn(Collections.emptyList());
+        when(periodUtils.getMonthsList()).thenReturn(Collections.singletonList(Month.JANUARY));
 
         // Act
-        String result = userController.list(model, 1, 2024);
+        String result = userController.list(model, null, null);
 
         // Assert
         assertEquals("users", result);
-        verify(model, times(1)).addAttribute(eq("userDTO"), any(UserDTO.class));
-        verify(model, times(1)).addAttribute(eq("periodDTO"), any(PeriodDTO.class));
-        verify(model, times(1)).addAttribute(eq("months"), anyList());
-        verify(model, times(1)).addAttribute(eq("currentMonth"), eq(1));
-        verify(model, times(1)).addAttribute(eq("userService"), eq(userService));
+        verify(model).addAttribute(eq("userDTO"), anyList());
+        verify(model).addAttribute(eq("periodDTO"), any(PeriodDTO.class));
+        verify(model).addAttribute(eq("months"), anyList());
+        verify(model).addAttribute(eq("currentMonth"), eq(defaultMonth));
     }
 
     @Test
-    public void testAddUser() {
+    void testAddUser() {
         // Arrange
-        RedirectAttributes redirectAttributes = mock(RedirectAttributes.class);
         when(userRepository.save(any(User.class))).thenReturn(new User("John"));
 
         // Act
@@ -92,9 +92,8 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testEditUserForm() {
+    void testEditUserForm() {
         // Arrange
-        Model model = mock(Model.class);
         when(userRepository.findById(1L)).thenReturn(Optional.of(new User("John")));
 
         // Act
@@ -106,9 +105,8 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testEditUser() {
+    void testEditUser() {
         // Arrange
-        RedirectAttributes redirectAttributes = mock(RedirectAttributes.class);
         when(userRepository.findById(1L)).thenReturn(Optional.of(new User("John")));
 
         // Act
@@ -121,9 +119,8 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testDeleteUser() {
+    void testDeleteUser() {
         // Arrange
-        RedirectAttributes redirectAttributes = mock(RedirectAttributes.class);
 
         // Act
         String result = userController.deleteUser(1L, redirectAttributes);
@@ -133,44 +130,42 @@ public class UserControllerTest {
         verify(userRepository, times(1)).deleteById(1L);
         verify(redirectAttributes, times(1)).addFlashAttribute(eq("message"), eq("User deleted successfully"));
     }
-    @Test
-    public void testGetIncomeMapForPeriod() {
-        // Arrange
-        List<User> users = Collections.singletonList(new User("John")); // использование конструктора с параметром
-        LocalDate startDate = LocalDate.now().minusDays(7);
-        LocalDate endDate = LocalDate.now().plusDays(7);
-        double incomePerShift = 100.0;
-        UserDTO userDTO = new UserDTO();
-
-        // Mock the behavior of userService and periodService
-        when(userService.getIncomeMapForPeriod(users, startDate, endDate, incomePerShift, userDTO))
-                .thenReturn(Collections.singletonMap(new User("John"), 200.0));
-
-        // Act
-        Map<User, Double> result = userService.getIncomeMapForPeriod(users, startDate, endDate, incomePerShift, userDTO);
-
-        // Assert
-        assertEquals(1, result.size());
-    }
 
     @Test
     public void testCalculateIncome() {
-        // Arrange
-        User user = new User("John");
-        LocalDate startDate = LocalDate.now().minusDays(7);
-        LocalDate endDate = LocalDate.now().plusDays(7);
-        double incomePerShift = 100.0;
-        UserDTO userDTO = new UserDTO();
+        // Создаем тестовые данные
+        LocalDate startDate = LocalDate.of(2024, 1, 1);
+        LocalDate endDate = LocalDate.of(2024, 1, 10);
+        Set<LocalDate> workingDates = new HashSet<>();
+        workingDates.add(LocalDate.of(2024, 1, 2));
 
-        // Mock the behavior of userService
-        when(userService.calculateIncome(user, startDate, endDate, incomePerShift, userDTO.getAdvancePaymentAmountMap())).thenReturn(200.0);
+        PeriodDTO periodDTO = new PeriodDTO();
+        periodDTO.setStartDate(startDate);
+        periodDTO.setEndDate(endDate);
 
-        // Act
-        double result = userService.calculateIncome(user, startDate, endDate, incomePerShift, userDTO.getAdvancePaymentAmountMap());
 
-        // Assert
-        assertEquals(200.0, result);
+        when(userService.calculateIncome(workingDates, periodDTO)).thenReturn(1 * incomePerShift);
+
+
+        double income = userService.calculateIncome(workingDates, periodDTO);
+        assertEquals(1 * incomePerShift, income, 0.001);
     }
+
+    @Test
+    public void testCalculateAdvancePayment() {
+
+        double income = 1000.0;
+
+
+        when(userService.calculateAdvancePayment(income)).thenReturn(10.0);
+
+
+        double advancePayment = userService.calculateAdvancePayment(income);
+        assertEquals(10.0, advancePayment, 0.001);
+    }
+
+
+
 
 }
 
