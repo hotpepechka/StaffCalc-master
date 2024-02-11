@@ -26,7 +26,7 @@ public class UserDTO {
     private Set<LocalDate> workingDates;
     private double income;
     private double advancePaymentAmount;
-
+    private List<PaymentDTO> payments;
 
 
 }

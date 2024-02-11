@@ -14,5 +14,8 @@ public class PeriodDTO {
     private LocalDate startDate;
     private LocalDate endDate;
 
-
+    public PeriodDTO(LocalDate startDate, LocalDate endDate) {
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
 }

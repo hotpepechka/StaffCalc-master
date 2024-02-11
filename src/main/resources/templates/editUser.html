@@ -46,7 +46,6 @@
                 }
             });
 
-            // удаление всех дат
             function removeAllDates() {
                 var userId = $("#id").val();  // Получаем идентификатор пользователя
 
@@ -65,6 +64,18 @@
 
                 // Обновление значения input для отправки на сервер (пустая строка)
                 $("#workingDatesHidden").val("");
+
+                // Вызов метода на сервере для удаления всех дат
+                $.ajax({
+                    type: "POST",
+                    url: "/users/removeAllDates/" + userId,
+                    success: function () {
+                        console.log("Даты успешно удалены.");
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Произошла ошибка при удалении дат: " + error);
+                    }
+                });
             }
             $("#removeDatesButton").on("click", removeAllDates);
         });

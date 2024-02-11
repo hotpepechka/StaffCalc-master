@@ -4,6 +4,7 @@ import com.example.StaffCalc.models.User;
 import com.example.StaffCalc.repository.UserRepository;
 import com.example.StaffCalc.service.PeriodUtils;
 import com.example.StaffCalc.service.UserService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -30,7 +31,6 @@ public class UserController {
         this.userService = userService;
 
     }
-
 
     @GetMapping
     public String list(Model model,
@@ -113,6 +113,8 @@ public class UserController {
             }
 
             userRepository.save(user);
+            userService.updatePaymentsForUser(user);
+
             redirectAttributes.addFlashAttribute("message", "User updated successfully");
             return "redirect:/users";
         }
@@ -126,7 +128,17 @@ public class UserController {
         return "redirect:/users";
     }
 
-
+    @Transactional
+    @PostMapping("/removeAllDates/{id}")
+    public String removeAllDates(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            userService.removeAllDates(id);
+            redirectAttributes.addFlashAttribute("message", "All dates removed successfully");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error removing dates: " + e.getMessage());
+        }
+        return "redirect:/users";
+    }
 
 
 
