@@ -1,23 +1,16 @@
 package com.example.StaffCalc.service;
 
 import com.example.StaffCalc.dto.PeriodDTO;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.Arrays;
 import java.util.List;
 
-@Setter
-@Getter
 public class PeriodUtils {
 
 
     private static final int START_PERIOD_DATE_FOR_CALCULATE_INCOME = 15;
-    private int currentMonth;
-    private int defaultSelectedYear;
 
     public static PeriodDTO getPeriodForCalculateIncome(int providedMonth, int providedYear) {
 
@@ -31,16 +24,17 @@ public class PeriodUtils {
         return periodDTO;
     }
 
+    public static boolean inPeriod(PeriodDTO period, LocalDate date) {
+        return date.isAfter(period.getStartDate().minusDays(1))
+                && date.isBefore(period.getEndDate().plusDays(1));
+    }
+
     public static List<Month> getMonthsList() {
         return Arrays.asList(Month.values());
     }
 
     public static int getCurrentMonth() {
         return LocalDate.now().getMonthValue();
-    }
-
-    public int getDefaultYear() {
-        return LocalDate.now().getYear();
     }
 
 }

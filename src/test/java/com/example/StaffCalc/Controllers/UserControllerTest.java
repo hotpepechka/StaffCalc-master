@@ -1,17 +1,17 @@
 package com.example.StaffCalc.Controllers;
+
 import com.example.StaffCalc.controllers.UserController;
 import com.example.StaffCalc.dto.PeriodDTO;
-import com.example.StaffCalc.dto.UserDTO;
 import com.example.StaffCalc.models.User;
 import com.example.StaffCalc.repository.UserRepository;
 import com.example.StaffCalc.service.PeriodUtils;
 import com.example.StaffCalc.service.UserService;
-import org.junit.jupiter.api.BeforeEach;
+import com.example.StaffCalc.service.calculate.Calculate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
@@ -21,10 +21,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.Month;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -38,6 +40,9 @@ public class UserControllerTest {
 
     @Mock
     private UserService userService;
+
+    @Autowired
+    private Calculate calculate;
 
     @Mock
     private PeriodUtils periodUtils;
@@ -144,10 +149,10 @@ public class UserControllerTest {
         periodDTO.setEndDate(endDate);
 
 
-        when(userService.calculateIncome(workingDates, periodDTO)).thenReturn(1 * incomePerShift);
+        when(calculate.calculateIncome(workingDates, periodDTO)).thenReturn(1 * incomePerShift);
 
 
-        double income = userService.calculateIncome(workingDates, periodDTO);
+        double income = calculate.calculateIncome(workingDates, periodDTO);
         assertEquals(1 * incomePerShift, income, 0.001);
     }
 
@@ -157,10 +162,10 @@ public class UserControllerTest {
         double income = 1000.0;
 
 
-        when(userService.calculateAdvancePayment(income)).thenReturn(10.0);
+        when(calculate.calculateAdvancePayment(income)).thenReturn(10.0);
 
 
-        double advancePayment = userService.calculateAdvancePayment(income);
+        double advancePayment = calculate.calculateAdvancePayment(income);
         assertEquals(10.0, advancePayment, 0.001);
     }
 

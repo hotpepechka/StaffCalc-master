@@ -13,8 +13,10 @@ spring:
       ddl-auto: update
     show-sql: true
 
-myapp:
-    advancePaymentPercentage: 25
-    incomePerShift: 1800
+calculate:
+  advance-payment-percentage: 25
+  income-per-shift: 1800
+  advance-payment: 5000
+  percentage-payment-enabled: false
 
 
