@@ -23,7 +23,7 @@
 
     <form action="/users/addUser" method="post">
         <label>Имя: </label>
-        <input type="text" id="userName" name="name" required>
+        <input type="text" id="userName" autocomplete="off" name="name" required>
         <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
         <button type="submit" class="btn btn-primary">Добавить рабочего</button>
     </form>
@@ -68,8 +68,10 @@
             </td>
 
             <td>
-                <span th:text="${user.income}"></span>
-                (Аванс: <span th:text="${user.advancePaymentAmount}"></span>)
+                Заработок: <span th:text="${user.income}"></span>
+                Выплаты: <span th:text="${user.mainPayments}"></span>
+                Итого: <span th:text="${user.income - user.mainPayments}"></span>
+                (Аванс: <span th:text="${user.advancePayments}"></span>)
             </td>
 
             <td>

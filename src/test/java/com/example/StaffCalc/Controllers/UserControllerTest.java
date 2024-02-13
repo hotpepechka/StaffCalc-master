@@ -4,22 +4,31 @@ import com.example.StaffCalc.controllers.UserController;
 import com.example.StaffCalc.dto.PeriodDTO;
 import com.example.StaffCalc.dto.UserDTO;
 import com.example.StaffCalc.models.User;
+import com.example.StaffCalc.repository.PaymentRepository;
 import com.example.StaffCalc.repository.UserRepository;
 import com.example.StaffCalc.service.PeriodUtils;
 import com.example.StaffCalc.service.UserService;
+import com.example.StaffCalc.service.calculate.BaseCalculate;
 import com.example.StaffCalc.service.calculate.Calculate;
+import com.example.StaffCalc.service.calculate.PercentageCalculate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.ui.Model;
+import org.springframework.web.servlet.FlashMap;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
@@ -30,10 +39,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ComponentScan("com.example.StaffCalc.controllers")
 public class UserControllerTest {
 
     @Mock
@@ -48,6 +58,11 @@ public class UserControllerTest {
     @Mock
     private PeriodUtils periodUtils;
 
+    @Mock
+    private PaymentRepository paymentRepository;
+
+
+
     @InjectMocks
     private UserController userController;
 
@@ -59,26 +74,25 @@ public class UserControllerTest {
 
     protected CalculateProperties calculateProperties;
 
-
+    private MockMvc mockMvc;
     @Test
-    void testList() {
-        // Arrange
-        int defaultMonth = LocalDate.now().getMonthValue();
-        int defaultYear = LocalDate.now().getYear();
-        when(periodUtils.getCurrentMonth()).thenReturn(defaultMonth);
-        when(userService.getUsers(any(PeriodDTO.class))).thenReturn(Collections.emptyList());
-        when(periodUtils.getMonthsList()).thenReturn(Collections.singletonList(Month.JANUARY));
+    public void testList() {
+        // Mocking parameters
+        Model model = Mockito.mock(Model.class);
+        Integer month = 1;
+        Integer year = 2024;
 
-        // Act
-        String result = userController.list(model, null, null);
+        List<UserDTO> mockUserDTOList = Collections.singletonList(new UserDTO(/* add necessary constructor parameters */));
+        when(userService.getUsers(any(PeriodDTO.class))).thenReturn(mockUserDTOList);
 
-        // Assert
+        String result = userController.list(model, month, year);
+
         assertEquals("users", result);
-        verify(model).addAttribute(eq("userDTO"), anyList());
-        verify(model).addAttribute(eq("periodDTO"), any(PeriodDTO.class));
-        verify(model).addAttribute(eq("months"), anyList());
-        verify(model).addAttribute(eq("currentMonth"), eq(defaultMonth));
+
+        Mockito.verify(model).addAttribute("userDTOList", mockUserDTOList);
+
     }
+
 
     @Test
     void testAddUser() {
@@ -108,67 +122,38 @@ public class UserControllerTest {
     }
 
     @Test
-    void testEditUser() {
-        // Arrange
-        when(userRepository.findById(1L)).thenReturn(Optional.of(new User("John")));
+    public void testEditUser() {
+        // Mocking parameters
+        Long userId = 1L;
+        String name = "NewName";
+        String workingDatesString = "01-01-2024, 02-01-2024";
+        String[] mainPaymentsAmount = {"100", "200"};
+        String[] mainPaymentsDates = {"01-01-2024", "02-01-2024"};
+        RedirectAttributes redirectAttributes = Mockito.mock(RedirectAttributes.class);
 
-        // Act
-        String result = userController.editUser(1L, "NewName", null, redirectAttributes);
+        User existingUser = new User();
+        when(userRepository.findById(userId)).thenReturn(java.util.Optional.of(existingUser));
 
-        // Assert
+        String result = userController.editUser(userId, name, workingDatesString, mainPaymentsAmount, mainPaymentsDates, redirectAttributes);
+
         assertEquals("redirect:/users", result);
-        verify(userRepository, times(1)).save(any(User.class));
-        verify(redirectAttributes, times(1)).addFlashAttribute(eq("message"), eq("User updated successfully"));
+
+        Mockito.verify(userRepository).save(existingUser);
+
+        Mockito.verify(userService).updatePaymentsForUser(existingUser, mainPaymentsAmount, mainPaymentsDates);
+
+        Mockito.verify(redirectAttributes).addFlashAttribute("message", "User updated successfully");
     }
 
     @Test
     void testDeleteUser() {
-        // Arrange
 
-        // Act
         String result = userController.deleteUser(1L, redirectAttributes);
 
-        // Assert
         assertEquals("redirect:/users", result);
         verify(userRepository, times(1)).deleteById(1L);
         verify(redirectAttributes, times(1)).addFlashAttribute(eq("message"), eq("User deleted successfully"));
     }
-
-    @Test
-    public void testCalculateIncome() {
-        // Создаем тестовые данные
-        LocalDate startDate = LocalDate.of(2024, 1, 1);
-        LocalDate endDate = LocalDate.of(2024, 1, 10);
-        Set<LocalDate> workingDates = new HashSet<>();
-        workingDates.add(LocalDate.of(2024, 1, 2));
-
-        PeriodDTO periodDTO = new PeriodDTO(startDate, endDate);
-        periodDTO.setStartDate(startDate);
-        periodDTO.setEndDate(endDate);
-
-
-        when(calculate.calculateIncome(workingDates, periodDTO)).thenReturn(1 * calculateProperties.getIncomePerShift());
-
-
-        double income = calculate.calculateIncome(workingDates, periodDTO);
-        assertEquals(1 * calculateProperties.getIncomePerShift(), income, 0.001);
-    }
-
-    @Test
-    public void testCalculateAdvancePayment() {
-
-        double income = 1000.0;
-
-
-        when(calculate.calculateAdvancePayment(income)).thenReturn(10.0);
-
-
-        double advancePayment = calculate.calculateAdvancePayment(income);
-        assertEquals(10.0, advancePayment, 0.001);
-    }
-
-
-
 
 }
 

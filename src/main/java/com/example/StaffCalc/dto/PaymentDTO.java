@@ -14,4 +14,12 @@ public class PaymentDTO {
     private Payment.PaymentType type;
     private LocalDate paymentDate;
     private double amount;
+
+
+    public PaymentDTO(Long id, Payment.PaymentType type, LocalDate paymentDate, double amount) {
+        this.id = id;
+        this.type = type;
+        this.paymentDate = paymentDate;
+        this.amount = amount;
+    }
 }

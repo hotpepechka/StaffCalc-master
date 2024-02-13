@@ -3,6 +3,7 @@ package com.example.StaffCalc.config;
 import com.example.StaffCalc.service.calculate.Calculate;
 import com.example.StaffCalc.service.calculate.FixedCalculate;
 import com.example.StaffCalc.service.calculate.PercentageCalculate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,4 +24,6 @@ public class CalculateConfig {
     public Calculate fixedCalculate(CalculateProperties calculateProperties){
         return new FixedCalculate(calculateProperties);
     }
+
+
 }

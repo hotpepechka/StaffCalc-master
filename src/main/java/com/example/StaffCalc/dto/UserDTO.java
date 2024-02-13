@@ -26,7 +26,20 @@ public class UserDTO {
     private Set<LocalDate> workingDates;
     private double income;
     private double advancePaymentAmount;
+
+
     private List<PaymentDTO> payments;
+    private double totalPayments;
+    private double MainPayments;
+    private double AdvancePayments;
+
+
+    public User getUser() {
+        User user = new User();
+        user.setId(id);
+        user.setName(name);
+        return user;
+    }
 
 
 }

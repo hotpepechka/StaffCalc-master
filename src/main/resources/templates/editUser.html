@@ -95,21 +95,44 @@
     <input type="hidden" id="id" name="id" th:value="${user.id}">
 
     <label for="workingDates">Рабочие даты (разделенные запятыми): </label>
-    <input type="text" id="workingDates" name="workingDates" th:value="${#strings.arrayJoin(user.workingDates, ',')}" />
+    <input type="text" autocomplete="off" id="workingDates" name="workingDates" th:value="${#strings.arrayJoin(user.workingDates, ',')}" />
     <input type="hidden" id="workingDatesHidden" name="workingDates" th:value="${#strings.arrayJoin(user.workingDates, ',')}" />
 
+    <h3>Основная выплата:</h3>
     <table>
-        <tr th:each="date: ${user.workingDates}">
+        <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Сумма</th>
+            <th>Аванс</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="mainPayment, rowStat : ${mainPayments}">
+            <td th:text="${mainPayment.paymentDate}"></td>
             <td>
-                <span th:text="${date}"></span>
+                <input autocomplete="off" type="text" name="mainPaymentsAmount" th:value="${mainPayment.amount}" />
+                <!-- Добавьте скрытое поле для передачи даты -->
+                <input type="hidden" name="mainPaymentsDates" th:value="${mainPayment.paymentDate}" />
+            </td>
+            <td>
+            <span th:each="advancePayment: ${advancePayments}">
+                <span th:if="${advancePayment.paymentDate == mainPayment.paymentDate}">
+                    <span th:text="${advancePayment.amount}"></span>
+                </span>
+            </span>
             </td>
         </tr>
+        </tbody>
+
+
     </table>
 
     <button type="button" class="btn btn-danger" id="removeDatesButton">Удалить все даты</button>
     <button class="btn btn-primary" type="submit">Сохранить изменения</button>
 </form>
 
-<a href="/users" class="btn btn-primary">Back to User List</a>
+
+<a href="/users" class="btn btn-primary">Вернуться к работникам</a>
 </body>
 </html>

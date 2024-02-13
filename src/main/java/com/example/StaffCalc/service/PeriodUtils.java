@@ -31,6 +31,11 @@ public class PeriodUtils {
         return periodDTO;
     }
 
+    public static boolean inPeriod(PeriodDTO period, LocalDate date) {
+        return date.isAfter(period.getStartDate().minusDays(1))
+                && date.isBefore(period.getEndDate().plusDays(1));
+    }
+
     public static List<Month> getMonthsList() {
         return Arrays.asList(Month.values());
     }
@@ -39,8 +44,5 @@ public class PeriodUtils {
         return LocalDate.now().getMonthValue();
     }
 
-    public int getDefaultYear() {
-        return LocalDate.now().getYear();
-    }
 
 }
