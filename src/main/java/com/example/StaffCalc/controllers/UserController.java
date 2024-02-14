@@ -59,11 +59,20 @@ public class UserController {
         PeriodDTO periodDTO = PeriodUtils.getPeriodForCalculateIncome(resolvedMonth, resolvedYear);
         List<UserDTO> userDTOList = userService.getUsers(periodDTO);
 
+        userDTOList.forEach(userDTO -> {
+            Set<LocalDate> filteredWorkingDates = userDTO.getWorkingDates().stream()
+                    .filter(date -> date.isAfter(periodDTO.getStartDate().minusDays(1)) && date.isBefore(periodDTO.getEndDate().plusDays(1)))
+                    .collect(Collectors.toSet());
+            userDTO.setWorkingDates(filteredWorkingDates);
+        });
+
         model.addAttribute("userDTOList", userDTOList);
 
         List<Month> monthsList = PeriodUtils.getMonthsList();
         int currentMonth = PeriodUtils.getCurrentMonth();
 
+        model.addAttribute("selectedYear", resolvedYear);
+        model.addAttribute("selectedMonth", resolvedMonth);
         model.addAttribute("periodDTO", periodDTO);
         model.addAttribute("months", monthsList);
         model.addAttribute("currentMonth", currentMonth);
@@ -130,7 +139,7 @@ public class UserController {
         userService.updatePaymentsForUser(user, mainPaymentsAmount, mainPaymentsDates);
 
         redirectAttributes.addFlashAttribute("message", "User updated successfully");
-        return "redirect:/users";
+        return "redirect:/users/edit/{id}";
     }
 
 

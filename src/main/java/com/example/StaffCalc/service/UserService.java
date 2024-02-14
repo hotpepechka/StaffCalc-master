@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -37,14 +38,20 @@ public class UserService {
         List<UserDTO> userDTOList = UserConverter.convertToUserDTOList(users);
 
         userDTOList.forEach(userDTO -> {
-            //доход для работника
+            // доход для работника
             userDTO.setIncome(calculate.calculateIncome(userDTO.getWorkingDates(), periodDTO));
 
-            //сумма аванса для работника
+            // сумма аванса для работника
             userDTO.setAdvancePaymentAmount(calculate.calculateAdvancePayment(userDTO.getIncome()));
 
             // список выплат для пользователя
             List<Payment> userPayments = paymentRepository.findByUser(userDTO.getUser());
+
+            // фильтрация выплат по месяцам в
+            userPayments = userPayments.stream()
+                    .filter(payment -> PeriodUtils.inPeriod(periodDTO, payment.getPaymentDate()))
+                    .collect(Collectors.toList());
+
             List<PaymentDTO> paymentDTOList = UserConverter.convertToPaymentDTOList(userPayments);
             userDTO.setPayments(paymentDTOList);
 
@@ -70,7 +77,6 @@ public class UserService {
         return userDTOList;
     }
 
-
     public void updatePaymentsForUser(User user, String[] mainPaymentsAmount, String[] mainPaymentsDates) {
         paymentRepository.deleteByUser(user);
 
@@ -78,7 +84,7 @@ public class UserService {
 
         Map<LocalDate, Double> mainPaymentsMap = new HashMap<>();
 
-        // Заполните значениями из mainPaymentsAmount и mainPaymentsDates
+        // значениями из mainPaymentsAmount и mainPaymentsDates
         if (mainPaymentsAmount != null && mainPaymentsDates != null) {
             for (int i = 0; i < Math.min(mainPaymentsAmount.length, mainPaymentsDates.length); i++) {
                 LocalDate date = LocalDate.parse(mainPaymentsDates[i]);

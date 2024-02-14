@@ -18,4 +18,5 @@ public class PercentageCalculate extends BaseCalculate {
     public void updatePaymentsForUser(User user) {
 
     }
+
 }

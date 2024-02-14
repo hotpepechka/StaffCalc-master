@@ -155,5 +155,42 @@ public class UserControllerTest {
         verify(redirectAttributes, times(1)).addFlashAttribute(eq("message"), eq("User deleted successfully"));
     }
 
+    @Test
+    void testCalculateIncome() {
+        Set<LocalDate> workingDates = Set.of(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 1, 2));
+
+        LocalDate startDate = LocalDate.of(2024, 1, 1);
+        LocalDate endDate = LocalDate.of(2024, 1, 31); // You need to adjust the end date based on your business logic
+
+        PeriodDTO periodDTO = new PeriodDTO(startDate, endDate);
+
+        CalculateProperties calculateProperties = mock(CalculateProperties.class);
+        when(calculateProperties.getIncomePerShift()).thenReturn(50.0);
+
+        BaseCalculate baseCalculate = new BaseCalculate(calculateProperties) {
+            @Override
+            public double calculateAdvancePayment(Double income) {
+                return 0;
+            }
+            @Override
+            public void updatePaymentsForUser(User user) {
+            }
+        };
+        double result = baseCalculate.calculateIncome(workingDates, periodDTO);
+        assertEquals(100.0, result);
+    }
+
+    @Test
+    void testCalculateAdvancePayment() {
+        CalculateProperties calculateProperties = mock(CalculateProperties.class);
+        when(calculateProperties.getAdvancePaymentPercentage()).thenReturn(10.0);
+        PercentageCalculate percentageCalculate = new PercentageCalculate(calculateProperties);
+        Double income = 500.0;
+        double result = percentageCalculate.calculateAdvancePayment(income);
+        assertEquals(50.0, result);
+    }
+
+
+
 }
 

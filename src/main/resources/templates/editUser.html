@@ -18,7 +18,7 @@
 
             // При загрузке страницы устанавливаем значения в поле ввода workingDates
             var storedDates = localStorage.getItem('workingDates_' + userId);
-            if (storedDates) {
+            if (storedDates)  {
                 $("#workingDates").val(storedDates);
 
                 // Обновляем значение скрытого поля в нужном формате при загрузке страницы
@@ -71,12 +71,16 @@
                     url: "/users/removeAllDates/" + userId,
                     success: function () {
                         console.log("Даты успешно удалены.");
+
+                        // Перенаправление пользователя после успешного удаления
+                        window.location.href = "/users";
                     },
                     error: function (xhr, status, error) {
                         console.error("Произошла ошибка при удалении дат: " + error);
                     }
                 });
             }
+
             $("#removeDatesButton").on("click", removeAllDates);
         });
     </script>
