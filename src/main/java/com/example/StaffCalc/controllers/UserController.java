@@ -29,13 +29,12 @@ public class UserController {
     private final UserService userService;
 
     private final PaymentRepository paymentRepository;
-
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
     @Autowired
     public UserController(UserRepository userRepository, UserService userService, PaymentRepository paymentRepository) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.paymentRepository = paymentRepository;
-
     }
 
     @GetMapping
@@ -70,7 +69,6 @@ public class UserController {
 
         List<Month> monthsList = PeriodUtils.getMonthsList();
         int currentMonth = PeriodUtils.getCurrentMonth();
-
         model.addAttribute("selectedYear", resolvedYear);
         model.addAttribute("selectedMonth", resolvedMonth);
         model.addAttribute("periodDTO", periodDTO);
@@ -80,8 +78,6 @@ public class UserController {
         return "users";
     }
 
-
-
     @PostMapping("/addUser")
     public String addUser(@RequestParam String name, RedirectAttributes redirectAttributes) {
         User newUser = new User(name);
@@ -90,26 +86,15 @@ public class UserController {
         return "redirect:/users";
     }
 
-    @GetMapping("/edit/{id}")
-    public String editUserForm(@PathVariable Long id, Model model) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
-        model.addAttribute("user", user);
-        List<Payment> mainPayments = paymentRepository.findByUserAndType(user, Payment.PaymentType.MAIN_PAYMENT);
-        List<Payment> advancePayments = paymentRepository.findByUserAndType(user, Payment.PaymentType.ADVANCE_PAYMENT);
-
-        // Add payments to the model
-        model.addAttribute("mainPayments", mainPayments);
-        model.addAttribute("advancePayments", advancePayments);
-        return "editUser";
-    }
+   
 
     @PostMapping("/edit/{id}")
     public String editUser(@PathVariable Long id,
                            @RequestParam String name,
                            @RequestParam(value = "workingDates", required = false) String workingDatesString,
-                           @RequestParam(value = "mainPaymentsAmount", required = false) String[] mainPaymentsAmount,
-                           @RequestParam(value = "mainPaymentsDates", required = false) String[] mainPaymentsDates,
+                           @RequestParam(value = "newPaymentDate", required = false) String newPaymentDate,
+                           @RequestParam(value = "newPaymentType", required = false) String newPaymentType,
+                           @RequestParam(value = "newPaymentAmount", required = false) String newPaymentAmount,
                            RedirectAttributes redirectAttributes) {
 
         User user = userRepository.findById(id)
@@ -117,6 +102,7 @@ public class UserController {
 
         user.setName(name);
 
+        // Обработка рабочих дат
         if (workingDatesString != null && !workingDatesString.isEmpty()) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
             Set<LocalDate> parsedDates = Arrays.stream(workingDatesString.split(","))
@@ -136,14 +122,23 @@ public class UserController {
 
         userRepository.save(user);
 
-        userService.updatePaymentsForUser(user, mainPaymentsAmount, mainPaymentsDates);
+        // Обработка новой выплаты
+        if (newPaymentDate != null && newPaymentType != null && newPaymentAmount != null) {
+            try {
+                LocalDate date = LocalDate.parse(newPaymentDate, formatter);
+                Payment.PaymentType paymentType = Payment.PaymentType.valueOf(newPaymentType);
+                Double amount = Double.parseDouble(newPaymentAmount);
+                userService.addNewPayment(user, date, paymentType, amount);
+            } catch (DateTimeParseException | IllegalArgumentException e) {
+                // Обработка ошибок
+                redirectAttributes.addFlashAttribute("error", "Неверный формат даты, типа выплаты или суммы");
+                return "redirect:/users";
+            }
 
+        }
         redirectAttributes.addFlashAttribute("message", "User updated successfully");
-        return "redirect:/users/edit/{id}";
+        return "redirect:/users";
     }
-
-
-
 
     @GetMapping("/delete/{id}")
     public String deleteUser(@PathVariable Long id, RedirectAttributes redirectAttributes) {
@@ -164,7 +159,4 @@ public class UserController {
         }
         return "redirect:/users";
     }
-
-
-
 }

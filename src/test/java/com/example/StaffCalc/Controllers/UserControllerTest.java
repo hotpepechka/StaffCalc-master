@@ -3,6 +3,7 @@ import com.example.StaffCalc.config.CalculateProperties;
 import com.example.StaffCalc.controllers.UserController;
 import com.example.StaffCalc.dto.PeriodDTO;
 import com.example.StaffCalc.dto.UserDTO;
+import com.example.StaffCalc.models.Payment;
 import com.example.StaffCalc.models.User;
 import com.example.StaffCalc.repository.PaymentRepository;
 import com.example.StaffCalc.repository.UserRepository;
@@ -33,6 +34,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -122,27 +124,51 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testEditUser() {
-        // Mocking parameters
+    void testEditUser() {
+        // Mock data
         Long userId = 1L;
         String name = "NewName";
         String workingDatesString = "01-01-2024, 02-01-2024";
-        String[] mainPaymentsAmount = {"100", "200"};
-        String[] mainPaymentsDates = {"01-01-2024", "02-01-2024"};
-        RedirectAttributes redirectAttributes = Mockito.mock(RedirectAttributes.class);
+        String newPaymentDate = "03-01-2024";
+        String newPaymentType = "MAIN_PAYMENT";
+        String newPaymentAmount = "300.0";
 
+        // Mock objects
         User existingUser = new User();
+        existingUser.setId(userId);
+
+        RedirectAttributes redirectAttributes = mock(RedirectAttributes.class);
+
+        // Mocking repository and service
         when(userRepository.findById(userId)).thenReturn(java.util.Optional.of(existingUser));
 
-        String result = userController.editUser(userId, name, workingDatesString, mainPaymentsAmount, mainPaymentsDates, redirectAttributes);
+        // Perform the edit
+        String result = userController.editUser(
+                userId,
+                name,
+                workingDatesString,
+                newPaymentDate,
+                newPaymentType,
+                newPaymentAmount,
+                redirectAttributes
+        );
 
-        assertEquals("redirect:/users", result);
+        // Assertions
+        assertEquals("redirect:/users/edit/" + userId, result);
 
-        Mockito.verify(userRepository).save(existingUser);
+        // Verify that the repository save method was called
+        verify(userRepository).save(existingUser);
 
-        Mockito.verify(userService).updatePaymentsForUser(existingUser, mainPaymentsAmount, mainPaymentsDates);
+        // Verify that the service method was called
+        verify(userService).addNewPayment(
+                existingUser,
+                LocalDate.parse(newPaymentDate, DateTimeFormatter.ofPattern("dd-MM-yyyy")),
+                Payment.PaymentType.MAIN_PAYMENT,
+                Double.parseDouble(newPaymentAmount)
+        );
 
-        Mockito.verify(redirectAttributes).addFlashAttribute("message", "User updated successfully");
+        // Verify that the redirect attribute was added
+        verify(redirectAttributes).addFlashAttribute("message", "User updated successfully");
     }
 
     @Test

@@ -34,12 +34,15 @@ public class UserDTO {
     private double AdvancePayments;
 
 
+    private User user;
+
     public User getUser() {
-        User user = new User();
-        user.setId(id);
-        user.setName(name);
+        if (user == null) {
+            user = new User();
+            user.setId(id);
+            user.setName(name);
+        }
         return user;
     }
-
 
 }

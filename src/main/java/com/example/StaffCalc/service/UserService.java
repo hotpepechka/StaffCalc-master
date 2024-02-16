@@ -77,46 +77,12 @@ public class UserService {
         return userDTOList;
     }
 
-    public void updatePaymentsForUser(User user, String[] mainPaymentsAmount, String[] mainPaymentsDates) {
-        paymentRepository.deleteByUser(user);
-
-        List<LocalDate> workingDatesList = new ArrayList<>(user.getWorkingDates());
-
-        Map<LocalDate, Double> mainPaymentsMap = new HashMap<>();
-
-        // значениями из mainPaymentsAmount и mainPaymentsDates
-        if (mainPaymentsAmount != null && mainPaymentsDates != null) {
-            for (int i = 0; i < Math.min(mainPaymentsAmount.length, mainPaymentsDates.length); i++) {
-                LocalDate date = LocalDate.parse(mainPaymentsDates[i]);
-                mainPaymentsMap.put(date, Double.parseDouble(mainPaymentsAmount[i]));
-            }
-        }
-
-        // новые записи о выплатах
-        for (LocalDate date : workingDatesList) {
-            double income = calculate.calculateIncome(user.getWorkingDates(), new PeriodDTO(date, date));
-
-            // основная выплата
-            Payment mainPayment = new Payment(user, Payment.PaymentType.MAIN_PAYMENT, date, income);
-
-            mainPayment.setAmount(0.0);
-
-            // значение mainPaymentsAmount по дате
-            if (mainPaymentsMap.containsKey(date)) {
-                mainPayment.setAmount(mainPaymentsMap.get(date));
-            }
-
-            paymentRepository.save(mainPayment);
-
-            // аванс
-            double advancePayment = calculate.calculateAdvancePayment(mainPayment.getAmount());
-            Payment advancePaymentEntity = new Payment(user, Payment.PaymentType.ADVANCE_PAYMENT, date, advancePayment);
-
-            paymentRepository.save(advancePaymentEntity);
-
-            // для внеочередной выплаты
-        }
+    public void addNewPayment(User user, LocalDate date, Payment.PaymentType paymentType, Double amount) {
+        // Создание записи о новой выплате
+        Payment newPayment = new Payment(user, paymentType, date, amount);
+        paymentRepository.save(newPayment);
     }
+
 
     @Transactional
     public void removeAllDates(Long userId) {

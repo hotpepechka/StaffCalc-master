@@ -3,85 +3,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-ui-multidatespicker/1.6.6/jquery-ui.multidatespicker.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js" integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+" crossorigin="anonymous"></script>
 </head>
 
-<body>
-<div class="container">
-    <nav class="navbar navbar-expand-lg navbar-light ">
-        <div class="container-fluid">
-            <h1 class="navbar-brand display-4">Список рабочих</h1>
+<body class="container">
+<h2 class="display-4">Список рабочих</h2>
+<form action="/users/addUser" method="post">
+    <label>Имя: </label>
+    <input type="text" id="userName" autocomplete="off" name="name" required>
+    <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+    <button type="submit" class="btn btn-primary">Добавить рабочего</button>
+</form>
+<form action="/users" method="get">
+    <label for="month">Выберите месяц: </label>
+    <select id="month" name="month">
+        <option th:each="month : ${#numbers.sequence(1, 12)}"
+                th:value="${month}"
+                th:text="${#temporals.format(#temporals.createNow().withMonth(month).withDayOfMonth(1), 'MMMM')}"
+                th:selected="${month == selectedMonth}"></option>
+    </select>
+    <label for="year">Выберите год: </label>
+    <select id="year" name="year">
+        <option th:each="y : ${#numbers.sequence(2024, 2030)}"
+                th:value="${y}"
+                th:text="${y}"></option>
+    </select>
+    <button type="submit" class="btn btn-secondary">Применить</button>
+</form>
 
-            <div class="d-flex">
-                <a class="btn btn-danger me-2" th:href="@{/logout}">Выйти</a>
-            </div>
-        </div>
-    </nav>
+<h3 th:text="${#temporals.format(periodDTO.endDate, 'MMMM yyyy')}"></h3>
 
-    <form action="/users/addUser" method="post">
-        <label>Имя: </label>
-        <input type="text" id="userName" autocomplete="off" name="name" required>
-        <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
-        <button type="submit" class="btn btn-primary">Добавить рабочего</button>
-    </form>
+<table class="table">
+    <thead>
+    <tr>
+        <th>Имя</th>
+        <th>Рабочие даты</th>
+        <th>Количество рабочих смен</th>
+        <th>Сумма заработка</th>
+        <th>Произведенные выплаты</th>
+        <th>нужно выплатить</th>
+        <th>Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="user : ${userDTOList}">
+        <td th:text="${user.name}"></td>
+        <td>
+            <span th:each="date, iterStat : ${user.workingDates}">
+                <span th:text="${#temporals.format(date, 'dd-MM-yyyy')}"></span>
+                <th:block th:if="${!iterStat.last}">, </th:block>
+            </span>
+        </td>
+        <td th:text="${#lists.size(user.workingDates)}"></td>
+        <td><span th:text="${user.income}"></span></td>
+        <td>
+            <span th:each="payment, iterStat : ${user.payments}">
+                <span th:text="${#temporals.format(payment.paymentDate, 'dd-MM-yyyy')}"></span>
+                <span th:text="' - ' + ${payment.amount} + ' руб'"></span>
+                <th:block th:if="${!iterStat.last}">, </th:block>
+            </span>
+        </td>
+        <td>
+            Выплатить: <span th:text="${user.income - user.mainPayments}"></span>
+        </td>
+        <td>
+            <a th:href="@{/users/delete/{id}(id=${user.id})}">Удалить</a>
+            <button class="editButton btn btn-primary" th:attr="data-userid=${user.id}">Редактировать</button>
+        </td>
+    </tr>
 
-    <form action="/users" method="get">
-        <label for="month">Выберите месяц: </label>
-        <select id="month" name="month">
-            <option th:each="month : ${#numbers.sequence(1, 12)}"
-                    th:value="${month}"
-                    th:text="${#temporals.format(#temporals.createNow().withMonth(month).withDayOfMonth(1), 'MMMM')}"
-                    th:selected="${month == selectedMonth}"></option>
-        </select>
-        <label for="year">Выберите год: </label>
-        <select id="year" name="year">
-            <option th:each="y : ${#numbers.sequence(2024, 2030)}"
-                    th:value="${y}"
-                    th:text="${y}"></option>
-        </select>
+        <tr th:each="userDTO : ${userDTOList}">
+            <td colspan="7">
+                <div th:id="'editFormContainer_' + ${userDTO.id}" style="display: none;">
+                    <form th:if="${userDTO != null}" th:action="@{'/users/edit/' + ${userDTO.id}}" method="post">
+                        <table>
+                            <tbody>
+                            <tr>
+                                <td>
+                                    <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
+                                    <label for="name">Имя:</label>
+                                    <input type="text" id="name" name="name" th:value="${userDTO.name}" required />
+                                    <input type="hidden" id="id" name="id" th:value="${userDTO.id}" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label >Рабочие даты (разделенные запятыми): </label>
+                                    <input type="text" autocomplete="off" th:id="'workingDates_' + ${userDTO.id}" name="workingDates" th:value="${#strings.arrayJoin(userDTO.workingDates, ',')}" />
+                                    <input type="hidden" th:id="'workingDatesHidden_' + ${userDTO.id}" name="workingDates" th:value="${#strings.arrayJoin(userDTO.workingDates, ',')}" />
 
-        <button type="submit" class="btn btn-secondary">Применить</button>
-    </form>
-
-
-
-    <h3 th:text="${#temporals.format(periodDTO.endDate, 'MMMM yyyy')}"></h3>
-    <table class="table">
-        <thead>
-        <tr>
-            <th>Имя</th>
-            <th>Рабочие даты</th>
-            <th>Зарплата</th>
-            <th>Действия</th>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <h3>Основная выплата:</h3>
+                                    <table>
+                                        <thead>
+                                        <tr>
+                                            <th>Дата</th>
+                                            <th>Сумма</th>
+                                            <th>Аванс</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr th:each="mainPayment, rowStat : ${mainPayments}">
+                                            <td th:text="${mainPayment.paymentDate}"></td>
+                                            <td>
+                                                <span th:text="${mainPayment.amount}" />
+                                                <!-- Добавьте скрытое поле для передачи даты -->
+                                                <input type="hidden" name="mainPaymentsDates" th:value="${mainPayment.paymentDate}" />
+                                            </td>
+                                            <td>
+                                        <span th:each="advancePayment: ${advancePayments}">
+                                            <span th:if="${advancePayment.paymentDate == mainPayment.paymentDate}">
+                                                <span th:text="${advancePayment.amount}"></span>
+                                            </span>
+                                        </span>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <h3>Добавить выплату:</h3>
+                                    <table>
+                                        <thead>
+                                        <tr>
+                                            <th>Дата</th>
+                                            <th>Тип</th>
+                                            <th>Сумма</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                            <td><input type="text" autocomplete="off" th:id="'newPaymentDate_' + ${userDTO.id}" class="newPaymentDate" name="newPaymentDate" placeholder="Дата" /></td>
+                                            <td>
+                                                <select name="newPaymentType">
+                                                    <option value="MAIN_PAYMENT">Основная выплата</option>
+                                                    <option value="ADVANCE_PAYMENT">Авансовая выплата</option>
+                                                </select>
+                                            </td>
+                                            <td><input type="text" autocomplete="off" name="newPaymentAmount" /></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <button type="button" class="btn btn-danger" id="removeDatesButton">Удалить все даты</button>
+                                    <button class="btn btn-primary" type="submit">Сохранить изменения</button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </form>
+                </div>
+            </td>
         </tr>
-        </thead>
-        <tbody>
-        <tr th:each="user : ${userDTOList}">
-            <td th:text="${user.name}"></td>
-            <td>
-                    <span th:each="date, iterStat : ${user.workingDates}">
-                        <span th:text="${#temporals.format(date, 'dd-MM-yyyy')}"></span>
-                        <th:block th:if="${!iterStat.last}">, </th:block>
-                    </span>
-            </td>
+    </tbody>
+</table>
+<script>
+    $(document).ready(function () {
 
-            <td>
-                Заработок: <span th:text="${user.income}"></span>
-                Выплаты: <span th:text="${user.mainPayments}"></span>
-                Выплатить: <span th:text="${user.income - user.mainPayments}"></span>
-                (Аванс: <span th:text="${user.advancePayments}"></span>)
-            </td>
+        // Обработчик для кнопки редактирования
+        $('.editButton').click(function (e) {
+            const userId = $(this).attr('data-userid');
 
-            <td>
-                <a th:href="@{/users/edit/{id}(id=${user.id})}">Редактировать</a>
-                <a th:href="@{/users/delete/{id}(id=${user.id})}">Удалить</a>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</div>
+            // Скрываем все формы редактирования, кроме текущей
+            $('[id^=editFormContainer_]').not('#editFormContainer_' + userId).hide();
+
+            // Показываем или скрываем текущую форму редактирования
+            $('#editFormContainer_' + userId).toggle();
+
+            // Инициализация multiDatesPicker для текущего пользователя
+            initializeMultiDatesPicker(userId);
+
+            initializeNewPaymentDatePicker(userId);
+        });
+
+        function initializeMultiDatesPicker(userId) {
+            $("#workingDates_" + userId).multiDatesPicker({
+                dateFormat: 'dd-mm-yy',
+                showButtonPanel: true,
+                changeMonth: true,
+                changeYear: true,
+                numberOfMonths: 2,
+                onSelect: function (selectedDate) {
+                    var formattedDate = moment(selectedDate, 'DD-MM-YYYY').format('DD-MM-YYYY');
+
+                    var currentDates = $("#workingDates_" + userId).val();
+                    localStorage.setItem('workingDates_' + userId, currentDates);
+
+                    // Обновление значения input для отправки на сервер
+                    $("#workingDatesHidden_" + userId).val(currentDates);
+                }
+            });
+
+            // Восстановление сохраненных дат при загрузке страницы
+            var storedDates = localStorage.getItem('workingDates_' + userId);
+            if (storedDates)  {
+                $("#workingDates_" + userId).val(storedDates);
+
+                // Обновляем значение скрытого поля в нужном формате при загрузке страницы
+                var formattedDates = storedDates.split(',').map(function(date) {
+                    return moment(date.trim(), 'DD-MM-YYYY').format('DD-MM-YYYY');
+                }).join(', ');
+                $("#workingDatesHidden_" + userId).val(formattedDates);
+            }
+
+
+        }
+        function initializeNewPaymentDatePicker(userId) {
+            // Инициализация календаря для новых выплат с уникальным идентификатором
+            $('#newPaymentDate_' + userId).datepicker({
+                dateFormat: 'dd-mm-yy',
+                changeMonth: true,
+                changeYear: true,
+                defaultDate: new Date() // Установка текущей даты
+            });
+        }
+
+
+        // Обработчик для кнопки удаления всех дат
+        function removeAllDates() {
+            var userId = $("#id").val();
+
+            // Очистка localStorage с уникальным ключом
+            localStorage.removeItem('workingDates_' + userId);
+
+            // Очистка поля ввода
+            $("#workingDates_" + userId).val("");
+
+            // Очистка таблицы
+            var table = document.querySelector("table");
+            var rows = table.getElementsByTagName("tr");
+            while (rows.length > 0) {
+                table.deleteRow(0);
+            }
+
+            // Обновление значения input для отправки на сервер (пустая строка)
+            $("#workingDatesHidden_" + userId).val("");
+
+            // Вызов метода на сервере для удаления всех дат
+            $.ajax({
+                type: "POST",
+                url: "/users/removeAllDates/" + userId,
+                success: function () {
+                    console.log("Даты успешно удалены.");
+
+                    // Перенаправление пользователя после успешного удаления
+                    window.location.href = "/users";
+                },
+                error: function (xhr, status, error) {
+                    console.error("Произошла ошибка при удалении дат: " + error);
+                }
+            });
+        }
+
+        $("#removeDatesButton").on("click", removeAllDates);
+    });
+</script>
 </body>
 </html>
+
