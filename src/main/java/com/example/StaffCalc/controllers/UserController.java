@@ -86,7 +86,7 @@ public class UserController {
         return "redirect:/users";
     }
 
-   
+
 
     @PostMapping("/edit/{id}")
     public String editUser(@PathVariable Long id,
