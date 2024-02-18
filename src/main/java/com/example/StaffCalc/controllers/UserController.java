@@ -10,6 +10,7 @@ import com.example.StaffCalc.service.UserService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -28,8 +29,9 @@ public class UserController {
     private final UserRepository userRepository;
     private final UserService userService;
 
+    private PeriodUtils periodUtils;
     private final PaymentRepository paymentRepository;
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     @Autowired
     public UserController(UserRepository userRepository, UserService userService, PaymentRepository paymentRepository) {
         this.userRepository = userRepository;
@@ -58,12 +60,13 @@ public class UserController {
         PeriodDTO periodDTO = PeriodUtils.getPeriodForCalculateIncome(resolvedMonth, resolvedYear);
         List<UserDTO> userDTOList = userService.getUsers(periodDTO);
 
-        userDTOList.forEach(userDTO -> {
-            Set<LocalDate> filteredWorkingDates = userDTO.getWorkingDates().stream()
-                    .filter(date -> date.isAfter(periodDTO.getStartDate().minusDays(1)) && date.isBefore(periodDTO.getEndDate().plusDays(1)))
-                    .collect(Collectors.toSet());
-            userDTO.setWorkingDates(filteredWorkingDates);
-        });
+
+        for (UserDTO user : userDTOList) {
+            List<LocalDate> filteredDates = user.getWorkingDates().stream()
+                    .filter(date -> periodUtils.inPeriod(periodDTO, date))
+                    .collect(Collectors.toList());
+            user.setFilteredWorkingDates(filteredDates);
+        }
 
         model.addAttribute("userDTOList", userDTOList);
 
@@ -95,6 +98,7 @@ public class UserController {
                            @RequestParam(value = "newPaymentDate", required = false) String newPaymentDate,
                            @RequestParam(value = "newPaymentType", required = false) String newPaymentType,
                            @RequestParam(value = "newPaymentAmount", required = false) String newPaymentAmount,
+                           @RequestParam(value = "deletePaymentId", required = false) Long deletePaymentId,
                            RedirectAttributes redirectAttributes) {
 
         User user = userRepository.findById(id)
@@ -104,7 +108,7 @@ public class UserController {
 
         // Обработка рабочих дат
         if (workingDatesString != null && !workingDatesString.isEmpty()) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             Set<LocalDate> parsedDates = Arrays.stream(workingDatesString.split(","))
                     .map(date -> {
                         try {
@@ -147,16 +151,9 @@ public class UserController {
         redirectAttributes.addFlashAttribute("message", "User deleted successfully");
         return "redirect:/users";
     }
-
-    @Transactional
-    @PostMapping("/removeAllDates/{id}")
-    public String removeAllDates(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        try {
-            userService.removeAllDates(id);
-            redirectAttributes.addFlashAttribute("message", "All dates removed successfully");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error removing dates: " + e.getMessage());
-        }
-        return "redirect:/users";
+    private Set<LocalDate> filteredWorkingDates(Set<LocalDate> workingDates, LocalDate startDate, LocalDate endDate) {
+        return workingDates.stream()
+                .filter(date -> date.isAfter(startDate.minusDays(1)) && date.isBefore(endDate.plusDays(1)))
+                .collect(Collectors.toSet());
     }
 }

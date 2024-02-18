@@ -32,9 +32,19 @@ public class Payment {
     private double amount;
 
     public enum PaymentType {
-        MAIN_PAYMENT,
-        ADVANCE_PAYMENT,
-        EXTRA_PAYMENT
+        MAIN_PAYMENT("основная оплата"),
+        ADVANCE_PAYMENT("аванс"),
+        EXTRA_PAYMENT("неизвестно");
+
+        private final String displayName;
+
+        PaymentType(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     public Payment(User user, PaymentType type, LocalDate paymentDate, double amount) {
@@ -43,4 +53,6 @@ public class Payment {
         this.paymentDate = paymentDate;
         this.amount = amount;
     }
+
+
 }

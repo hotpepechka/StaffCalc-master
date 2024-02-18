@@ -32,7 +32,7 @@ public class UserDTO {
     private double totalPayments;
     private double MainPayments;
     private double AdvancePayments;
-
+    private List<LocalDate> filteredWorkingDates;
 
     private User user;
 

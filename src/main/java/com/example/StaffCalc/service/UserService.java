@@ -83,15 +83,4 @@ public class UserService {
         paymentRepository.save(newPayment);
     }
 
-
-    @Transactional
-    public void removeAllDates(Long userId) {
-        User user = userRepository.findById(userId).orElse(null);
-        if (user != null) {
-            user.setWorkingDates(Collections.emptySet());
-            userRepository.save(user);
-            paymentRepository.deleteByUser(user);
-        }
-    }
-
 }
