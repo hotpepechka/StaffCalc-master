@@ -183,10 +183,7 @@
             $workingDatesInput.flatpickr({
                 mode: 'multiple', // Выбор нескольких дат
                 dateFormat: 'Y-m-d',
-                onClose: function (selectedDates) {
-                    // Обновление значения input для отправки на сервер
-                    $workingDatesInput.val(selectedDates.map(date => date.toISOString().split('T')[0]).join(', '));
-                }
+
             });
         }
 

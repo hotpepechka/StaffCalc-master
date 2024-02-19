@@ -129,6 +129,7 @@ public class UserController {
         // Обработка новой выплаты
         if (newPaymentDate != null && newPaymentType != null && newPaymentAmount != null) {
             try {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 LocalDate date = LocalDate.parse(newPaymentDate, formatter);
                 Payment.PaymentType paymentType = Payment.PaymentType.valueOf(newPaymentType);
                 Double amount = Double.parseDouble(newPaymentAmount);
@@ -138,8 +139,8 @@ public class UserController {
                 redirectAttributes.addFlashAttribute("error", "Неверный формат даты, типа выплаты или суммы");
                 return "redirect:/users";
             }
-
         }
+
         redirectAttributes.addFlashAttribute("message", "User updated successfully");
         return "redirect:/users";
     }
