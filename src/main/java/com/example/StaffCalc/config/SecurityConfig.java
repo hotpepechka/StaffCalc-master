@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
                         .permitAll());
 
+
         return http.build();
     }
     private boolean is404(HttpServletRequest request) {

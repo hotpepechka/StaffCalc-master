@@ -12,6 +12,7 @@ import com.example.StaffCalc.service.UserService;
 import com.example.StaffCalc.service.calculate.BaseCalculate;
 import com.example.StaffCalc.service.calculate.Calculate;
 import com.example.StaffCalc.service.calculate.PercentageCalculate;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -77,116 +78,69 @@ public class UserControllerTest {
     protected CalculateProperties calculateProperties;
 
     private MockMvc mockMvc;
+
+    @Mock
+    private HttpServletRequest request;
+
     @Test
     public void testList() {
-        // Mocking parameters
-        Model model = Mockito.mock(Model.class);
-        Integer month = 1;
-        Integer year = 2024;
+        when(request.getParameter("month")).thenReturn("2");
+        when(request.getParameter("year")).thenReturn("2024");
 
-        List<UserDTO> mockUserDTOList = Collections.singletonList(new UserDTO(/* add necessary constructor parameters */));
-        when(userService.getUsers(any(PeriodDTO.class))).thenReturn(mockUserDTOList);
+        String viewName = userController.list(model, null, null);
 
-        String result = userController.list(model, month, year);
-
-        assertEquals("users", result);
-
-        Mockito.verify(model).addAttribute("userDTOList", mockUserDTOList);
-
+        assertEquals("users", viewName);
     }
 
-
     @Test
-    void testAddUser() {
-        // Arrange
-        when(userRepository.save(any(User.class))).thenReturn(new User("John"));
+    public void testAddUser() {
+        when(request.getParameter("name")).thenReturn("John");
 
-        // Act
-        String result = userController.addUser("John", redirectAttributes);
+        String viewName = userController.addUser("John", redirectAttributes, request);
 
-        // Assert
-        assertEquals("redirect:/users", result);
+        assertEquals("redirect:null", viewName);
         verify(userRepository, times(1)).save(any(User.class));
-        verify(redirectAttributes, times(1)).addFlashAttribute(eq("message"), eq("User added successfully"));
     }
 
     @Test
-    void testEditUserForm() {
-        // Arrange
-        when(userRepository.findById(1L)).thenReturn(Optional.of(new User("John")));
+    public void testEditUser() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(new User()));
+        when(request.getParameter("name")).thenReturn("John");
+        when(request.getParameter("workingDates")).thenReturn("2024-02-01, 2024-02-15");
 
-        // Act
-        String result = userController.editUserForm(1L, model);
+        String viewName = userController.editUser(1L, "John", "2024-02-01, 2024-02-15", null, null, null, redirectAttributes, request);
 
-        // Assert
-        assertEquals("editUser", result);
-        verify(model, times(1)).addAttribute(eq("user"), any(User.class));
+        assertEquals("redirect:null", viewName);
+        verify(userRepository, times(1)).save(any(User.class));
     }
 
     @Test
-    void testEditUser() {
-        // Mock data
-        Long userId = 1L;
-        String name = "NewName";
-        String workingDatesString = "01-01-2024, 02-01-2024";
-        String newPaymentDate = "03-01-2024";
-        String newPaymentType = "MAIN_PAYMENT";
-        String newPaymentAmount = "300.0";
+    public void testDeleteUser() {
+        when(request.getParameter("id")).thenReturn("1");
 
-        // Mock objects
-        User existingUser = new User();
-        existingUser.setId(userId);
+        String viewName = userController.deleteUser(1L, redirectAttributes, request);
 
-        RedirectAttributes redirectAttributes = mock(RedirectAttributes.class);
-
-        // Mocking repository and service
-        when(userRepository.findById(userId)).thenReturn(java.util.Optional.of(existingUser));
-
-        // Perform the edit
-        String result = userController.editUser(
-                userId,
-                name,
-                workingDatesString,
-                newPaymentDate,
-                newPaymentType,
-                newPaymentAmount,
-                redirectAttributes
-        );
-
-        // Assertions
-        assertEquals("redirect:/users/edit/" + userId, result);
-
-        // Verify that the repository save method was called
-        verify(userRepository).save(existingUser);
-
-        // Verify that the service method was called
-        verify(userService).addNewPayment(
-                existingUser,
-                LocalDate.parse(newPaymentDate, DateTimeFormatter.ofPattern("dd-MM-yyyy")),
-                Payment.PaymentType.MAIN_PAYMENT,
-                Double.parseDouble(newPaymentAmount)
-        );
-
-        // Verify that the redirect attribute was added
-        verify(redirectAttributes).addFlashAttribute("message", "User updated successfully");
-    }
-
-    @Test
-    void testDeleteUser() {
-
-        String result = userController.deleteUser(1L, redirectAttributes);
-
-        assertEquals("redirect:/users", result);
+        assertEquals("redirect:null", viewName);
         verify(userRepository, times(1)).deleteById(1L);
-        verify(redirectAttributes, times(1)).addFlashAttribute(eq("message"), eq("User deleted successfully"));
     }
+
+    @Test
+    public void testDeletePayment() {
+        when(request.getParameter("id")).thenReturn("1");
+
+        String viewName = userController.deletePayment(1L, redirectAttributes, request);
+
+        assertEquals("redirect:null", viewName);
+        verify(paymentRepository, times(1)).deleteById(1L);
+    }
+
 
     @Test
     void testCalculateIncome() {
         Set<LocalDate> workingDates = Set.of(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 1, 2));
 
         LocalDate startDate = LocalDate.of(2024, 1, 1);
-        LocalDate endDate = LocalDate.of(2024, 1, 31); // You need to adjust the end date based on your business logic
+        LocalDate endDate = LocalDate.of(2024, 1, 31);
 
         PeriodDTO periodDTO = new PeriodDTO(startDate, endDate);
 

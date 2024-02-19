@@ -34,6 +34,7 @@
                 th:value="${y}"
                 th:text="${y}"></option>
     </select>
+
     <button type="submit" class="btn btn-secondary">Применить</button>
 </form>
 
@@ -65,12 +66,12 @@
         <td>
            <span th:each="payment, iterStat : ${user.payments}">
             <span th:text="${#temporals.format(payment.paymentDate, 'dd-MM-yyyy')}"></span>
-<span th:text="' - ' + ${payment.amount} + ' руб (' + ${payment.type.getDisplayName()} + ')'"></span>
+               <span th:text="' - ' + ${payment.amount} + ' руб (' + ${payment.type.getDisplayName()} + ')'"></span>
                <th:block th:if="${!iterStat.last}"><br></th:block>
             </span>
         </td>
         <td>
-            Выплатить: <span th:text="${user.income - user.mainPayments} + ' руб'"></span>
+            Выплатить: <span th:text="${user.income - user.mainPayments - user.advancePayments} + ' руб'"></span>
         </td>
         <td>
             <a th:href="@{/users/delete/{id}(id=${user.id})}">Удалить</a>
@@ -97,8 +98,10 @@
                                 <td>
                                     <label>Рабочие даты (разделенные запятыми):</label>
                                     <input type="text" autocomplete="off" th:id="'workingDates_' + ${userDTO.id}" name="workingDates"
-                                           th:value="${#strings.listJoin(userDTO.workingDates, ', ')}"/>
+                                           th:value="${#strings.listJoin(userDTO.workingDates, ', ')}"
+                                           th:data-taken-dates="${#strings.listJoin(takenDatesList[iterStat.index], ', ')}"/>
                                 </td>
+
                             </tr>
                             <tr>
                                 <td>
@@ -108,12 +111,16 @@
                                         <tr>
                                             <th>Дата</th>
                                             <th>Сумма</th>
+                                            <th>Действия</th>
                                         </tr>
                                         </thead>
                                         <tbody>
                                         <tr th:each="mainPayment, rowStat : ${userDTO.payments}">
                                             <td th:text="${#temporals.format(mainPayment.paymentDate, 'dd-MM-yyyy')}"></td>
                                             <td th:text="${mainPayment.amount} + ' руб'"></td>
+                                            <td>
+                                                <a th:href="@{/users/deletePayment/{id}(id=${mainPayment.id})}">Удалить</a>
+                                            </td>
                                         </tr>
                                         </tbody>
                                     </table>
@@ -179,13 +186,22 @@
 
         function initializeFlatpickr(userId) {
             const $workingDatesInput = $("#workingDates_" + userId);
+            const takenDates = $workingDatesInput.data('taken-dates').split(',').map(date => date.trim());
 
             $workingDatesInput.flatpickr({
                 mode: 'multiple', // Выбор нескольких дат
                 dateFormat: 'Y-m-d',
+                disable: takenDates, // Запрещенные даты
 
+                onDayCreate: function (dObj, dStr, fp, dayElem) {
+                    // Проверка, является ли дата занятой и блокировка ее выбора в календаре
+                    if (takenDates.includes(dStr)) {
+                        dayElem.classList.add("disabled");
+                    }
+                },
             });
         }
+
 
         function initializeNewPaymentDatePicker(userId) {
             // Инициализация календаря для новых выплат с уникальным идентификатором
@@ -197,7 +213,9 @@
                 }
             });
         }
+
     });
+
 </script>
 </body>
 </html>

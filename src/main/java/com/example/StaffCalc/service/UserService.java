@@ -32,12 +32,20 @@ public class UserService {
 
 
     public List<UserDTO> getUsers(PeriodDTO periodDTO) {
-
         List<User> users = userRepository.findAll();
+        List<Long> userIds = users.stream().map(User::getId).collect(Collectors.toList());
+
+        List<Payment> userPayments = paymentRepository.findByUser_IdInAndPaymentDateBetween(
+                userIds, periodDTO.getStartDate(), periodDTO.getEndDate());
+
+        Map<Long, List<Payment>> userPaymentsMap = userPayments.stream()
+                .collect(Collectors.groupingBy(payment -> payment.getUser().getId()));
 
         List<UserDTO> userDTOList = UserConverter.convertToUserDTOList(users);
 
         userDTOList.forEach(userDTO -> {
+            long userId = userDTO.getUser().getId();
+
             // доход для работника
             userDTO.setIncome(calculate.calculateIncome(userDTO.getWorkingDates(), periodDTO));
 
@@ -45,25 +53,23 @@ public class UserService {
             userDTO.setAdvancePaymentAmount(calculate.calculateAdvancePayment(userDTO.getIncome()));
 
             // список выплат для пользователя
-            List<Payment> userPayments = paymentRepository.findByUser(userDTO.getUser());
-
-            // фильтрация выплат по месяцам в
-            userPayments = userPayments.stream()
+            List<Payment> userPaymentsForUser = userPaymentsMap.getOrDefault(userId, Collections.emptyList())
+                    .stream()
                     .filter(payment -> PeriodUtils.inPeriod(periodDTO, payment.getPaymentDate()))
                     .collect(Collectors.toList());
 
-            List<PaymentDTO> paymentDTOList = UserConverter.convertToPaymentDTOList(userPayments);
+            List<PaymentDTO> paymentDTOList = UserConverter.convertToPaymentDTOList(userPaymentsForUser);
             userDTO.setPayments(paymentDTOList);
 
             // сумма основных выплат
-            double mainPayments = userPayments.stream()
+            double mainPayments = userPaymentsForUser.stream()
                     .filter(payment -> payment.getType() == Payment.PaymentType.MAIN_PAYMENT)
                     .mapToDouble(Payment::getAmount)
                     .sum();
             userDTO.setMainPayments(mainPayments);
 
             // сумма авансовых выплат
-            double advancePayments = userPayments.stream()
+            double advancePayments = userPaymentsForUser.stream()
                     .filter(payment -> payment.getType() == Payment.PaymentType.ADVANCE_PAYMENT)
                     .mapToDouble(Payment::getAmount)
                     .sum();

@@ -7,9 +7,11 @@ import com.example.StaffCalc.repository.PaymentRepository;
 import com.example.StaffCalc.repository.UserRepository;
 import com.example.StaffCalc.service.PeriodUtils;
 import com.example.StaffCalc.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,10 +30,11 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final UserService userService;
-
-    private PeriodUtils periodUtils;
     private final PaymentRepository paymentRepository;
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    private String getReferer(HttpServletRequest request) {
+        return request.getHeader("referer");
+    }
     @Autowired
     public UserController(UserRepository userRepository, UserService userService, PaymentRepository paymentRepository) {
         this.userRepository = userRepository;
@@ -41,8 +44,8 @@ public class UserController {
 
     @GetMapping
     public String list(Model model,
-                       @RequestParam(required = false) Integer month,
-                       @RequestParam(required = false) Integer year) {
+                       @RequestParam(value = "month", required = false) Integer month,
+                       @RequestParam(value = "year", required = false) Integer year) {
 
         int defaultMonth = LocalDate.now().getMonthValue();
         int defaultYear = LocalDate.now().getYear();
@@ -60,16 +63,24 @@ public class UserController {
         PeriodDTO periodDTO = PeriodUtils.getPeriodForCalculateIncome(resolvedMonth, resolvedYear);
         List<UserDTO> userDTOList = userService.getUsers(periodDTO);
 
-
+        // фильтр по месяцам для рабочих дат
         for (UserDTO user : userDTOList) {
             List<LocalDate> filteredDates = user.getWorkingDates().stream()
-                    .filter(date -> periodUtils.inPeriod(periodDTO, date))
+                    .filter(date -> PeriodUtils.inPeriod(periodDTO, date))
                     .collect(Collectors.toList());
             user.setFilteredWorkingDates(filteredDates);
         }
+        // фильтр для календаря чтобы не позволял выбрать чужие рабочие даты
+        List<List<LocalDate>> takenDatesList = userDTOList.stream()
+                .map(userDTO -> userDTOList.stream()
+                        .filter(u -> !u.getId().equals(userDTO.getId()))
+                        .flatMap(u -> u.getWorkingDates().stream())
+                        .collect(Collectors.toList()))
+                .collect(Collectors.toList());
 
         model.addAttribute("userDTOList", userDTOList);
 
+        model.addAttribute("takenDatesList", takenDatesList);
         List<Month> monthsList = PeriodUtils.getMonthsList();
         int currentMonth = PeriodUtils.getCurrentMonth();
         model.addAttribute("selectedYear", resolvedYear);
@@ -82,11 +93,11 @@ public class UserController {
     }
 
     @PostMapping("/addUser")
-    public String addUser(@RequestParam String name, RedirectAttributes redirectAttributes) {
+    public String addUser(@RequestParam String name, RedirectAttributes redirectAttributes, HttpServletRequest request) {
         User newUser = new User(name);
         userRepository.save(newUser);
         redirectAttributes.addFlashAttribute("message", "User added successfully");
-        return "redirect:/users";
+        return "redirect:" + getReferer(request);
     }
 
 
@@ -98,8 +109,8 @@ public class UserController {
                            @RequestParam(value = "newPaymentDate", required = false) String newPaymentDate,
                            @RequestParam(value = "newPaymentType", required = false) String newPaymentType,
                            @RequestParam(value = "newPaymentAmount", required = false) String newPaymentAmount,
-                           @RequestParam(value = "deletePaymentId", required = false) Long deletePaymentId,
-                           RedirectAttributes redirectAttributes) {
+                           RedirectAttributes redirectAttributes,
+                           HttpServletRequest request) {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
@@ -135,26 +146,28 @@ public class UserController {
                 Double amount = Double.parseDouble(newPaymentAmount);
                 userService.addNewPayment(user, date, paymentType, amount);
             } catch (DateTimeParseException | IllegalArgumentException e) {
-                // Обработка ошибок
                 redirectAttributes.addFlashAttribute("error", "Неверный формат даты, типа выплаты или суммы");
-                return "redirect:/users";
+                return "redirect:" + getReferer(request);
             }
         }
 
         redirectAttributes.addFlashAttribute("message", "User updated successfully");
-        return "redirect:/users";
+        return "redirect:" + getReferer(request);
     }
 
     @GetMapping("/delete/{id}")
-    public String deleteUser(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String deleteUser(@PathVariable Long id, RedirectAttributes redirectAttributes, HttpServletRequest request) {
         userRepository.deleteById(id);
 
         redirectAttributes.addFlashAttribute("message", "User deleted successfully");
-        return "redirect:/users";
+        return "redirect:" + getReferer(request);
     }
-    private Set<LocalDate> filteredWorkingDates(Set<LocalDate> workingDates, LocalDate startDate, LocalDate endDate) {
-        return workingDates.stream()
-                .filter(date -> date.isAfter(startDate.minusDays(1)) && date.isBefore(endDate.plusDays(1)))
-                .collect(Collectors.toSet());
+
+    @GetMapping("/deletePayment/{id}")
+    public String deletePayment(@PathVariable Long id, RedirectAttributes redirectAttributes, HttpServletRequest request) {
+        paymentRepository.deleteById(id);
+
+        redirectAttributes.addFlashAttribute("message", "User deleted successfully");
+        return "redirect:" + getReferer(request);
     }
 }
