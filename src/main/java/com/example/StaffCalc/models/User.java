@@ -7,7 +7,9 @@ import org.springframework.context.annotation.Configuration;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,6 +34,9 @@ public class User implements Serializable{
     @CollectionTable(name = "user_working_dates", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "working_date")
     private Set<LocalDate> workingDates = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Payment> payments = new ArrayList<>();
 
     public User(String name) {
         this.name = name;

@@ -1,6 +1,7 @@
 package com.example.StaffCalc.service.calculate;
 
 import com.example.StaffCalc.config.CalculateProperties;
+import com.example.StaffCalc.models.User;
 
 public class PercentageCalculate extends BaseCalculate {
 
@@ -12,4 +13,10 @@ public class PercentageCalculate extends BaseCalculate {
     public double calculateAdvancePayment(Double income) {
         return income * calculateProperties.getAdvancePaymentPercentage() / 100;
     }
+
+    @Override
+    public void updatePaymentsForUser(User user) {
+
+    }
+
 }

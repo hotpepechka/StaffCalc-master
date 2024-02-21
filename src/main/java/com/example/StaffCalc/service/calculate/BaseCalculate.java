@@ -9,16 +9,19 @@ import java.time.LocalDate;
 import java.util.Set;
 
 @AllArgsConstructor
-public abstract class BaseCalculate implements Calculate {
+public abstract class BaseCalculate implements Calculate{
 
     protected CalculateProperties calculateProperties;
 
+
     @Override
     public double calculateIncome(Set<LocalDate> workingDates, PeriodDTO periodDTO) {
+
         long numberOfShifts = workingDates.stream()
                 .filter(date -> PeriodUtils.inPeriod(periodDTO, date))
                 .count();
 
         return numberOfShifts * calculateProperties.getIncomePerShift();
     }
+
 }

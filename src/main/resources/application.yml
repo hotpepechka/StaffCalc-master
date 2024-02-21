@@ -17,6 +17,6 @@ calculate:
   advance-payment-percentage: 25
   income-per-shift: 1800
   advance-payment: 5000
-  percentage-payment-enabled: false
+  percentage-payment-enabled: true
 
 

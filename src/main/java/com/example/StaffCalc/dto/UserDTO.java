@@ -22,5 +22,21 @@ public class UserDTO {
     private double advancePaymentAmount;
 
 
+    private List<PaymentDTO> payments;
+    private double totalPayments;
+    private double MainPayments;
+    private double AdvancePayments;
+    private List<LocalDate> filteredWorkingDates;
+
+    private User user;
+
+    public User getUser() {
+        if (user == null) {
+            user = new User();
+            user.setId(id);
+            user.setName(name);
+        }
+        return user;
+    }
 
 }

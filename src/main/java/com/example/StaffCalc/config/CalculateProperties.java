@@ -1,7 +1,6 @@
 package com.example.StaffCalc.config;
 
 import lombok.Data;
-import lombok.Getter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
@@ -11,5 +10,4 @@ public class CalculateProperties {
     private double incomePerShift;
     private int advancePayment;
     private double advancePaymentPercentage;
-
 }
