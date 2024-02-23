@@ -19,4 +19,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     List<Payment> findByUser_IdInAndPaymentDateBetween(List<Long> userIds, LocalDate startDate, LocalDate endDate);
 
+
 }

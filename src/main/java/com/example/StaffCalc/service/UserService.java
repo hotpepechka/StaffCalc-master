@@ -27,20 +27,12 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final PaymentRepository paymentRepository;
     private final Calculate calculate;
+    private final PaymentService paymentService;
 
 
     public List<UserDTO> getUsers(PeriodDTO periodDTO) {
         List<User> users = userRepository.findAll();
-        List<Long> userIds = users.stream().map(User::getId).collect(Collectors.toList());
-
-        List<Payment> userPayments = paymentRepository.findByUser_IdInAndPaymentDateBetween(
-                userIds, periodDTO.getStartDate(), periodDTO.getEndDate());
-
-        Map<Long, List<Payment>> userPaymentsMap = userPayments.stream()
-                .collect(Collectors.groupingBy(payment -> payment.getUser().getId()));
-
         List<UserDTO> userDTOList = UserConverter.convertToUserDTOList(users);
 
         userDTOList.forEach(userDTO -> {
@@ -53,27 +45,19 @@ public class UserService {
             userDTO.setAdvancePaymentAmount(calculate.calculateAdvancePayment(userDTO.getIncome()));
 
             // список выплат для пользователя
-            List<Payment> userPaymentsForUser = userPaymentsMap.getOrDefault(userId, Collections.emptyList())
-                    .stream()
-                    .filter(payment -> PeriodUtils.inPeriod(periodDTO, payment.getPaymentDate()))
-                    .collect(Collectors.toList());
-
-            List<PaymentDTO> paymentDTOList = UserConverter.convertToPaymentDTOList(userPaymentsForUser);
+            List<PaymentDTO> paymentDTOList = paymentService.getUserPaymentsInPeriod(userId, periodDTO);
             userDTO.setPayments(paymentDTOList);
 
             // сумма основных выплат
-            double mainPayments = userPaymentsForUser.stream()
-                    .filter(payment -> payment.getType() == Payment.PaymentType.MAIN_PAYMENT)
-                    .mapToDouble(Payment::getAmount)
-                    .sum();
+            double mainPayments = paymentService.getSumOfPaymentsInPeriod(userId, Payment.PaymentType.MAIN_PAYMENT, periodDTO);
             userDTO.setMainPayments(mainPayments);
 
             // сумма авансовых выплат
-            double advancePayments = userPaymentsForUser.stream()
-                    .filter(payment -> payment.getType() == Payment.PaymentType.ADVANCE_PAYMENT)
-                    .mapToDouble(Payment::getAmount)
-                    .sum();
+            double advancePayments = paymentService.getSumOfPaymentsInPeriod(userId, Payment.PaymentType.ADVANCE_PAYMENT, periodDTO);
             userDTO.setAdvancePayments(advancePayments);
+
+            double extraPayments = paymentService.getSumOfPaymentsInPeriod(userId, Payment.PaymentType.EXTRA_PAYMENT, periodDTO);
+            userDTO.setExtraPayments(extraPayments);
 
             // общую сумму выплат для пользователя в период
             double totalPayments = userDTO.getMainPayments() + userDTO.getAdvancePayments();
@@ -82,11 +66,4 @@ public class UserService {
 
         return userDTOList;
     }
-
-    public void addNewPayment(User user, LocalDate date, Payment.PaymentType paymentType, Double amount) {
-        // Создание записи о новой выплате
-        Payment newPayment = new Payment(user, paymentType, date, amount);
-        paymentRepository.save(newPayment);
-    }
-
 }

@@ -4,13 +4,16 @@ spring:
     username: login
     password: pass
     driver-class-name: org.postgresql.Driver
-
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
 
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: true
 
 calculate:

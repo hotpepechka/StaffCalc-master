@@ -28,6 +28,7 @@ public class UserDTO {
     private double totalPayments;
     private double MainPayments;
     private double AdvancePayments;
+    private double ExtraPayments;
     private List<LocalDate> filteredWorkingDates;
 
     private User user;

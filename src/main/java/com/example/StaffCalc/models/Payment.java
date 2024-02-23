@@ -34,7 +34,7 @@ public class Payment {
     public enum PaymentType {
         MAIN_PAYMENT("основная оплата"),
         ADVANCE_PAYMENT("аванс"),
-        EXTRA_PAYMENT("Экстра");
+        EXTRA_PAYMENT("Внеплановая");
 
         private final String displayName;
 

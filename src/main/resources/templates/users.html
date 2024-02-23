@@ -14,7 +14,7 @@
 </head>
 <body class="container">
 <h2 class="display-4">Список рабочих</h2>
-<form action="/users/addUser" method="post">
+<form action="/users/" method="post">
     <label>Имя: </label>
     <input type="text" id="userName" autocomplete="off" name="name" required>
     <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
@@ -74,7 +74,10 @@
             Выплатить: <span th:text="${user.income - user.mainPayments - user.advancePayments} + ' руб'"></span>
         </td>
         <td>
-            <a th:href="@{/users/delete/{id}(id=${user.id})}">Удалить</a>
+            <form th:action="@{'/users/delete/' + ${user.id}}" method="post">
+                <input type="hidden" name="_method" value="delete" />
+                <button type="submit" class="btn btn-danger">Удалить</button>
+            </form>
             <button class="editButton btn btn-primary" th:attr="data-userid=${user.id}">Редактировать</button>
         </td>
     </tr>
@@ -82,7 +85,7 @@
         <tr th:each="userDTO, iterStat : ${userDTOList}">
             <td colspan="7">
                 <div th:id="'editFormContainer_' + ${userDTO.id}" style="display: none;">
-                    <form th:if="${userDTO != null}" th:action="@{'/users/edit/' + ${userDTO.id}}" method="post">
+                    <form th:if="${userDTO != null}" th:action="@{'/users/' + ${userDTO.id}}" method="post" th:method="put">
                         <table>
                             <tbody>
                             <tr>
@@ -101,29 +104,22 @@
                                            th:value="${#strings.listJoin(userDTO.workingDates, ', ')}"
                                            th:data-taken-dates="${#strings.listJoin(takenDatesList[iterStat.index], ', ')}"/>
                                 </td>
-
                             </tr>
                             <tr>
                                 <td>
+                                    <button class="btn btn-primary" type="submit">Сохранить изменения</button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </form>
+                    <form th:if="${userDTO != null}" th:action="@{'/payments/' + ${userDTO.id}}" th:method="put">
+                        <table>
+                            <tbody>
+                            <tr>
+                                <td>
                                     <h3>Основная выплата:</h3>
-                                    <table>
-                                        <thead>
-                                        <tr>
-                                            <th>Дата</th>
-                                            <th>Сумма</th>
-                                            <th>Действия</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        <tr th:each="mainPayment, rowStat : ${userDTO.payments}">
-                                            <td th:text="${#temporals.format(mainPayment.paymentDate, 'dd-MM-yyyy')}"></td>
-                                            <td th:text="${mainPayment.amount} + ' руб'"></td>
-                                            <td>
-                                                <a th:href="@{/users/deletePayment/{id}(id=${mainPayment.id})}">Удалить</a>
-                                            </td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
+
                                 </td>
                             </tr>
                             <tr>
@@ -144,6 +140,7 @@
                                                 <select name="newPaymentType">
                                                     <option value="MAIN_PAYMENT">Основная выплата</option>
                                                     <option value="ADVANCE_PAYMENT">Авансовая выплата</option>
+                                                    <option value="EXTRA_PAYMENT">Внеплановая выплата</option>
                                                 </select>
                                             </td>
                                             <td><input type="text" autocomplete="off" name="newPaymentAmount" /></td>
@@ -154,12 +151,33 @@
                             </tr>
                             <tr>
                                 <td>
-                                    <button class="btn btn-primary" type="submit">Сохранить изменения</button>
+                                    <button class="btn btn-primary" type="submit" >Добавить</button>
                                 </td>
                             </tr>
                             </tbody>
                         </table>
                     </form>
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Дата</th>
+                            <th>Сумма</th>
+                            <th>Действия</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="mainPayment, rowStat : ${userDTO.payments}">
+                            <td th:text="${#temporals.format(mainPayment.paymentDate, 'dd-MM-yyyy')}"></td>
+                            <td th:text="${mainPayment.amount} + ' руб'"></td>
+                            <td>
+                                <form th:action="@{'/payments/delete/' + ${mainPayment.id}}" method="post">
+                                    <input type="hidden" name="_method" value="delete" />
+                                    <button type="submit" class="btn btn-danger" >Удалить</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
             </td>
         </tr>
@@ -186,7 +204,9 @@
 
         function initializeFlatpickr(userId) {
             const $workingDatesInput = $("#workingDates_" + userId);
-            const takenDates = $workingDatesInput.data('taken-dates').split(',').map(date => date.trim());
+
+            const takenDatesAttr = $workingDatesInput.data('taken-dates');
+            const takenDates = takenDatesAttr ? takenDatesAttr.split(',').map(date => date.trim()) : [];
 
             $workingDatesInput.flatpickr({
                 mode: 'multiple', // Выбор нескольких дат
@@ -215,7 +235,6 @@
         }
 
     });
-
 </script>
 </body>
 </html>

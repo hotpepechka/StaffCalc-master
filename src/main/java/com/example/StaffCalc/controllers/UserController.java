@@ -24,6 +24,7 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.example.StaffCalc.dto.UserDTO;
+
 @Controller
 @RequestMapping("/users")
 public class UserController {
@@ -92,7 +93,7 @@ public class UserController {
         return "users";
     }
 
-    @PostMapping("/addUser")
+    @PostMapping("/")
     public String addUser(@RequestParam String name, RedirectAttributes redirectAttributes, HttpServletRequest request) {
         User newUser = new User(name);
         userRepository.save(newUser);
@@ -102,13 +103,11 @@ public class UserController {
 
 
 
-    @PostMapping("/edit/{id}")
+    @PutMapping("/{id}")
     public String editUser(@PathVariable Long id,
                            @RequestParam String name,
                            @RequestParam(value = "workingDates", required = false) String workingDatesString,
-                           @RequestParam(value = "newPaymentDate", required = false) String newPaymentDate,
-                           @RequestParam(value = "newPaymentType", required = false) String newPaymentType,
-                           @RequestParam(value = "newPaymentAmount", required = false) String newPaymentAmount,
+                           // ... (остальные параметры)
                            RedirectAttributes redirectAttributes,
                            HttpServletRequest request) {
 
@@ -137,35 +136,13 @@ public class UserController {
 
         userRepository.save(user);
 
-        // Обработка новой выплаты
-        if (newPaymentDate != null && newPaymentType != null && newPaymentAmount != null) {
-            try {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                LocalDate date = LocalDate.parse(newPaymentDate, formatter);
-                Payment.PaymentType paymentType = Payment.PaymentType.valueOf(newPaymentType);
-                Double amount = Double.parseDouble(newPaymentAmount);
-                userService.addNewPayment(user, date, paymentType, amount);
-            } catch (DateTimeParseException | IllegalArgumentException e) {
-                redirectAttributes.addFlashAttribute("error", "Неверный формат даты, типа выплаты или суммы");
-                return "redirect:" + getReferer(request);
-            }
-        }
-
         redirectAttributes.addFlashAttribute("message", "User updated successfully");
         return "redirect:" + getReferer(request);
     }
 
-    @GetMapping("/delete/{id}")
+    @DeleteMapping("/delete/{id}")
     public String deleteUser(@PathVariable Long id, RedirectAttributes redirectAttributes, HttpServletRequest request) {
         userRepository.deleteById(id);
-
-        redirectAttributes.addFlashAttribute("message", "User deleted successfully");
-        return "redirect:" + getReferer(request);
-    }
-
-    @GetMapping("/deletePayment/{id}")
-    public String deletePayment(@PathVariable Long id, RedirectAttributes redirectAttributes, HttpServletRequest request) {
-        paymentRepository.deleteById(id);
 
         redirectAttributes.addFlashAttribute("message", "User deleted successfully");
         return "redirect:" + getReferer(request);
