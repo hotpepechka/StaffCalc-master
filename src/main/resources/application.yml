@@ -13,13 +13,13 @@ spring:
     open-in-view: false
 
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: true
 
 calculate:
   advance-payment-percentage: 25
   income-per-shift: 1800
   advance-payment: 5000
-  percentage-payment-enabled: true
+  percentage-payment-enabled: false
 
 

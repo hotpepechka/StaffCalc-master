@@ -14,11 +14,10 @@
 </head>
 <body class="container">
 <h2 class="display-4">Список рабочих</h2>
-<form action="/users/" method="post">
+<form id="addUserForm">
     <label>Имя: </label>
     <input type="text" id="userName" autocomplete="off" name="name" required>
-    <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
-    <button type="submit" class="btn btn-primary">Добавить рабочего</button>
+    <button type="button" id="addUserButton" class="btn btn-primary">Добавить рабочего</button>
 </form>
 <form id="userForm" action="/users" method="get">
     <label for="month">Выберите месяц: </label>
@@ -38,9 +37,10 @@
     <button type="submit" class="btn btn-secondary">Применить</button>
 </form>
 
-<h3 th:text="${#temporals.format(periodDTO.endDate, 'MMMM yyyy')}"></h3>
 
-<table class="table">
+
+<table id="tableContainer" class="table">
+    <h3 th:text="${#temporals.format(periodDTO.endDate, 'MMMM yyyy')}"></h3>
     <thead>
     <tr>
         <th>Имя</th>
@@ -71,26 +71,30 @@
             </span>
         </td>
         <td>
-            Выплатить: <span th:text="${user.income - user.mainPayments - user.advancePayments} + ' руб'"></span>
+        (аванс)
+        <span th:text="${#temporals.format(periodDTO.startDate.withDayOfMonth(25), 'dd.MM')}"></span>
+        <span th:text="${user.AdvancePaymentAmount - user.advancePayments} + ' руб'"></span>,
+            <br>
+        (основная оплата)
+        <span th:text="${#temporals.format(periodDTO.endDate.withDayOfMonth(15), 'dd.MM')}"></span>
+        <span th:text="${user.income - user.totalPayments } + ' руб'"></span>
+
         </td>
+
         <td>
-            <form th:action="@{'/users/delete/' + ${user.id}}" method="post">
-                <input type="hidden" name="_method" value="delete" />
-                <button type="submit" class="btn btn-danger">Удалить</button>
-            </form>
-            <button class="editButton btn btn-primary" th:attr="data-userid=${user.id}">Редактировать</button>
+        <button class="deleteButton btn btn-danger" th:attr="data-userid=${user.id}">Удалить</button>
+        <button class="editButton btn btn-primary" th:attr="data-userid=${user.id}">Редактировать</button>
         </td>
     </tr>
 
         <tr th:each="userDTO, iterStat : ${userDTOList}">
             <td colspan="7">
                 <div th:id="'editFormContainer_' + ${userDTO.id}" style="display: none;">
-                    <form th:if="${userDTO != null}" th:action="@{'/users/' + ${userDTO.id}}" method="post" th:method="put">
+                    <form th:if="${userDTO != null}" th:action="@{'/users/' + ${userDTO.id}}" method="post" th:method="put" th:id="'editUserForm_' + ${userDTO.id}">
                         <table>
                             <tbody>
                             <tr>
                                 <td>
-                                    <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
                                     <label for="name">Имя:</label>
                                     <input type="text" id="name" name="name" th:value="${userDTO.name}" required />
                                     <input type="hidden" id="id" name="id" th:value="${userDTO.id}" />
@@ -107,21 +111,15 @@
                             </tr>
                             <tr>
                                 <td>
-                                    <button class="btn btn-primary" type="submit">Сохранить изменения</button>
+                                    <button type="button" id="editUserButton" class="btn btn-primary">Сохранить изменения</button>
                                 </td>
                             </tr>
                             </tbody>
                         </table>
                     </form>
-                    <form th:if="${userDTO != null}" th:action="@{'/payments/' + ${userDTO.id}}" th:method="put">
+                    <form th:if="${userDTO != null}" th:action="@{'/users/payments/' + ${userDTO.id}}" th:method="put" class="addPaymentForm">
                         <table>
                             <tbody>
-                            <tr>
-                                <td>
-                                    <h3>Основная выплата:</h3>
-
-                                </td>
-                            </tr>
                             <tr>
                                 <td>
                                     <h3>Добавить выплату:</h3>
@@ -151,12 +149,15 @@
                             </tr>
                             <tr>
                                 <td>
+                                    <!-- Добавляем скрытое поле для передачи userId -->
+                                    <input type="hidden" name="userId" th:value="${userDTO.id}" />
                                     <button class="btn btn-primary" type="submit" >Добавить</button>
                                 </td>
                             </tr>
                             </tbody>
                         </table>
                     </form>
+
                     <table>
                         <thead>
                         <tr>
@@ -170,10 +171,7 @@
                             <td th:text="${#temporals.format(mainPayment.paymentDate, 'dd-MM-yyyy')}"></td>
                             <td th:text="${mainPayment.amount} + ' руб'"></td>
                             <td>
-                                <form th:action="@{'/payments/delete/' + ${mainPayment.id}}" method="post">
-                                    <input type="hidden" name="_method" value="delete" />
-                                    <button type="submit" class="btn btn-danger" >Удалить</button>
-                                </form>
+                                <button class="btn btn-danger deletePaymentButton" th:data-payment-id="${mainPayment.id}">Удалить</button>
                             </td>
                         </tr>
                         </tbody>
@@ -186,19 +184,17 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
     $(document).ready(function () {
-        // Обработчик для кнопки редактирования
-        $('.editButton').click(function (e) {
-            const userId = $(this).attr('data-userid');
 
+        $(document).on('click', '.editButton', function (e) {
+            const userId = $(this).attr('data-userid');
+            const formId = '#editUserForm_' + userId;
             // Скрываем все формы редактирования, кроме текущей
             $('[id^=editFormContainer_]').not('#editFormContainer_' + userId).hide();
 
             // Показываем или скрываем текущую форму редактирования
-            $('#editFormContainer_' + userId).toggle();
-
+            $(formId).toggle();
             // Инициализация multiDatesPicker для текущего пользователя
             initializeFlatpickr(userId);
-
             initializeNewPaymentDatePicker(userId);
         });
 
@@ -222,19 +218,144 @@
             });
         }
 
+            function initializeNewPaymentDatePicker(userId) {
+                // Инициализация календаря для новых выплат с уникальным идентификатором
+                flatpickr('#newPaymentDate_' + userId, {
+                    dateFormat: 'Y-m-d',
+                    defaultDate: 'today', // Установка текущей даты
+                    onChange: function (selectedDates) {
 
-        function initializeNewPaymentDatePicker(userId) {
-            // Инициализация календаря для новых выплат с уникальным идентификатором
-            flatpickr('#newPaymentDate_' + userId, {
-                dateFormat: 'Y-m-d',
-                defaultDate: 'today', // Установка текущей даты
-                onChange: function (selectedDates) {
-                    // Обработка изменения даты
+                    }
+                });
+            }
+
+        $("#addUserButton").click(function () {
+            $.ajax({
+                url: "/users/",
+                type: "POST",
+                data: $("#addUserForm").serialize(),
+                success: function (response) {
+                    updateTableAndInitializeButtons();
+                    $("#addUserForm")[0].reset();
+                },
+                error: function (error) {
+                    alert("Ошибка при добавлении пользователя: " + error.responseText);
+                }
+            });
+        });
+
+        // AJAX для редактирования пользователя
+        $(document).on('click', '#editUserButton', function () {
+            const userId = $(this).closest('form').find('input[name=id]').val();
+            const formId = '#editUserForm_' + userId;
+
+            $.ajax({
+                url: "/users/" + userId,
+                type: "PUT",
+                data: $(formId).serialize(),
+                success: function (response) {
+                    updateTableAndInitializeButtons();
+                    $(formId).toggle();
+
+                },
+                error: function (error) {
+                    alert("Ошибка при редактировании пользователя: " + error.responseText);
+                }
+            });
+        });
+        $(document).on('click', '.deleteButton', function () {
+            const userId = $(this).data('userid');
+
+            $.ajax({
+                url: "/users/delete/" + userId,
+                type: "DELETE",
+
+                success: function (response) {
+                    updateTableAndInitializeButtons();
+                },
+                error: function (error) {
+                    alert("Ошибка при удалении пользователя: " + error.responseText);
+                }
+            });
+        });
+
+        // AJAX для добавления новой выплаты
+        $(document).on('submit', '.addPaymentForm', function (e) {
+            e.preventDefault();
+            const form = $(this);
+            const userId = form.find('input[name=userId]').val();
+
+            $.ajax({
+                url: "/payments/" + userId,
+                type: "PUT",
+                data: form.serialize(),
+                success: function (response) {
+                    updateTableAndInitializeButtons();
+                    // Опционально: очистите форму после успешного добавления
+                    form.find('input[type=text]').val('');
+                },
+                error: function (error) {
+                    alert("Ошибка при добавлении выплаты: " + error.responseText);
+                }
+            });
+        });
+
+        // AJAX для удаления выплаты
+        $(document).on('click', '.deletePaymentButton', function () {
+            const paymentId = $(this).data('payment-id');
+
+            $.ajax({
+                url: "/payments/delete/" + paymentId,
+                type: "DELETE",
+                success: function (response) {
+                    updateTableAndInitializeButtons(); // Обновление таблицы после удаления
+                },
+                error: function (error) {
+                    alert("Ошибка при удалении выплаты: " + error.responseText);
+                }
+            });
+        });
+
+        function updateTableAndInitializeButtons() {
+            updateTable();
+            initializeUserButtons();
+        }
+
+        function updateTable() {
+            $.ajax({
+                url: "/users",
+                type: "GET",
+                success: function (data) {
+                    // Обновить содержимое таблицы с новыми данными
+                    $("#tableContainer").load(" #tableContainer > *");
+                },
+                error: function (error) {
+                    console.log("Ошибка при обновлении таблицы: " + error.responseText);
                 }
             });
         }
+        function initializeUserButtons() {
+            // Обработчик для кнопки редактирования
+            $(document).off('click', '.editButton').on('click', '.editButton', function (e) {
+                const userId = $(this).attr('data-userid');
 
+                // Скрываем все формы редактирования, кроме текущей
+                $('[id^=editFormContainer_]').not('#editFormContainer_' + userId).hide();
+
+                // Показываем или скрываем текущую форму редактирования
+                $('#editFormContainer_' + userId).toggle();
+
+                // Инициализация multiDatesPicker для текущего пользователя
+                initializeFlatpickr(userId);
+
+                initializeNewPaymentDatePicker(userId);
+            });
+
+        }
+
+        initializeUserButtons();
     });
+
 </script>
 </body>
 </html>

@@ -33,9 +33,6 @@ public class UserController {
     private final UserService userService;
     private final PaymentRepository paymentRepository;
 
-    private String getReferer(HttpServletRequest request) {
-        return request.getHeader("referer");
-    }
     @Autowired
     public UserController(UserRepository userRepository, UserService userService, PaymentRepository paymentRepository) {
         this.userRepository = userRepository;
@@ -44,7 +41,7 @@ public class UserController {
     }
 
     @GetMapping
-    public String list(Model model,
+    public List<UserDTO> list(Model model,
                        @RequestParam(value = "month", required = false) Integer month,
                        @RequestParam(value = "year", required = false) Integer year) {
 
@@ -90,26 +87,27 @@ public class UserController {
         model.addAttribute("months", monthsList);
         model.addAttribute("currentMonth", currentMonth);
 
-        return "users";
+        return userDTOList;
     }
 
     @PostMapping("/")
-    public String addUser(@RequestParam String name, RedirectAttributes redirectAttributes, HttpServletRequest request) {
+    @ResponseBody
+    public ResponseEntity<String> addUser(@RequestParam String name, RedirectAttributes redirectAttributes) {
         User newUser = new User(name);
         userRepository.save(newUser);
+
         redirectAttributes.addFlashAttribute("message", "User added successfully");
-        return "redirect:" + getReferer(request);
+        return ResponseEntity.ok("Пользователь успешно добавлен");
     }
 
 
 
     @PutMapping("/{id}")
-    public String editUser(@PathVariable Long id,
+    @ResponseBody
+    public ResponseEntity<String> editUser(@PathVariable Long id,
                            @RequestParam String name,
                            @RequestParam(value = "workingDates", required = false) String workingDatesString,
-                           // ... (остальные параметры)
-                           RedirectAttributes redirectAttributes,
-                           HttpServletRequest request) {
+                           RedirectAttributes redirectAttributes) {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
@@ -137,14 +135,17 @@ public class UserController {
         userRepository.save(user);
 
         redirectAttributes.addFlashAttribute("message", "User updated successfully");
-        return "redirect:" + getReferer(request);
+        return ResponseEntity.ok("Пользователь успешно обновлен");
     }
 
     @DeleteMapping("/delete/{id}")
-    public String deleteUser(@PathVariable Long id, RedirectAttributes redirectAttributes, HttpServletRequest request) {
-        userRepository.deleteById(id);
-
-        redirectAttributes.addFlashAttribute("message", "User deleted successfully");
-        return "redirect:" + getReferer(request);
+    @ResponseBody
+    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
+        try {
+            userRepository.deleteById(id);
+            return ResponseEntity.ok("Пользователь успешно удален");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ошибка при удалении пользователя: " + e.getMessage());
+        }
     }
 }
