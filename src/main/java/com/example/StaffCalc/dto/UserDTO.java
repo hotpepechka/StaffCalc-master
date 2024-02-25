@@ -22,7 +22,7 @@ public class UserDTO {
     private Set<LocalDate> workingDates;
     private double income;
     private double advancePaymentAmount;
-
+    private List<LocalDate> takenDates;
 
     private List<PaymentDTO> payments;
     private double totalPayments;

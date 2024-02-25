@@ -31,13 +31,12 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final UserService userService;
-    private final PaymentRepository paymentRepository;
 
     @Autowired
-    public UserController(UserRepository userRepository, UserService userService, PaymentRepository paymentRepository) {
+    public UserController(UserRepository userRepository, UserService userService) {
         this.userRepository = userRepository;
         this.userService = userService;
-        this.paymentRepository = paymentRepository;
+
     }
 
     @GetMapping
@@ -68,17 +67,18 @@ public class UserController {
                     .collect(Collectors.toList());
             user.setFilteredWorkingDates(filteredDates);
         }
-        // фильтр для календаря чтобы не позволял выбрать чужие рабочие даты
-        List<List<LocalDate>> takenDatesList = userDTOList.stream()
-                .map(userDTO -> userDTOList.stream()
-                        .filter(u -> !u.getId().equals(userDTO.getId()))
-                        .flatMap(u -> u.getWorkingDates().stream())
-                        .collect(Collectors.toList()))
-                .collect(Collectors.toList());
+        userDTOList.forEach(userDTO -> {
+            List<LocalDate> takenDates = userDTOList.stream()
+                    .filter(otherUser -> !otherUser.getId().equals(userDTO.getId()))
+                    .flatMap(otherUser -> otherUser.getWorkingDates().stream())
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            userDTO.setTakenDates(takenDates);
+        });
 
         model.addAttribute("userDTOList", userDTOList);
 
-        model.addAttribute("takenDatesList", takenDatesList);
         List<Month> monthsList = PeriodUtils.getMonthsList();
         int currentMonth = PeriodUtils.getCurrentMonth();
         model.addAttribute("selectedYear", resolvedYear);
@@ -99,8 +99,6 @@ public class UserController {
         redirectAttributes.addFlashAttribute("message", "User added successfully");
         return ResponseEntity.ok("Пользователь успешно добавлен");
     }
-
-
 
     @PutMapping("/{id}")
     @ResponseBody

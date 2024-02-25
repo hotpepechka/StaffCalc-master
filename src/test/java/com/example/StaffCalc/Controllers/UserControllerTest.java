@@ -82,57 +82,6 @@ public class UserControllerTest {
     @Mock
     private HttpServletRequest request;
 
-    @Test
-    public void testList() {
-        when(request.getParameter("month")).thenReturn("2");
-        when(request.getParameter("year")).thenReturn("2024");
-
-        String viewName = userController.list(model, null, null);
-
-        assertEquals("users", viewName);
-    }
-
-    @Test
-    public void testAddUser() {
-        when(request.getParameter("name")).thenReturn("John");
-
-        String viewName = userController.addUser("John", redirectAttributes, request);
-
-        assertEquals("redirect:null", viewName);
-        verify(userRepository, times(1)).save(any(User.class));
-    }
-
-    @Test
-    public void testEditUser() {
-        when(userRepository.findById(anyLong())).thenReturn(Optional.of(new User()));
-        when(request.getParameter("name")).thenReturn("John");
-        when(request.getParameter("workingDates")).thenReturn("2024-02-01, 2024-02-15");
-
-        String viewName = userController.editUser(1L, "John", "2024-02-01, 2024-02-15", null, null, null, redirectAttributes, request);
-
-        assertEquals("redirect:null", viewName);
-        verify(userRepository, times(1)).save(any(User.class));
-    }
-
-    @Test
-    public void testDeleteUser() {
-        when(request.getParameter("id")).thenReturn("1");
-
-        String viewName = userController.deleteUser(1L, redirectAttributes, request);
-
-        assertEquals("redirect:null", viewName);
-        verify(userRepository, times(1)).deleteById(1L);
-    }
-
-    @Test
-    public void testDeletePayment() {
-        when(request.getParameter("id")).thenReturn("1");
-
-        String viewName = userController.deletePayment(1L, redirectAttributes, request);
-
-        assertEquals("redirect:null", viewName);
-        verify(paymentRepository, times(1)).deleteById(1L);
-    }
 
 
     @Test

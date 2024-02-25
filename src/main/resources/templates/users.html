@@ -106,7 +106,7 @@
                                     <label>Рабочие даты (разделенные запятыми):</label>
                                     <input type="text" autocomplete="off" th:id="'workingDates_' + ${userDTO.id}" name="workingDates"
                                            th:value="${#strings.listJoin(userDTO.workingDates, ', ')}"
-                                           th:data-taken-dates="${#strings.listJoin(takenDatesList[iterStat.index], ', ')}"/>
+                                           th:data-taken-dates="${#strings.listJoin(userDTO.takenDates, ', ')}"/>
                                 </td>
                             </tr>
                             <tr>
