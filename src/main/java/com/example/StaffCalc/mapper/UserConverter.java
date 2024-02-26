@@ -1,14 +1,9 @@
 package com.example.StaffCalc.mapper;
-
 import com.example.StaffCalc.dto.PaymentDTO;
 import com.example.StaffCalc.dto.UserDTO;
 import com.example.StaffCalc.models.Payment;
 import com.example.StaffCalc.models.User;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class UserConverter {

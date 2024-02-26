@@ -22,8 +22,6 @@ import java.time.format.DateTimeParseException;
 @RequestMapping("/payments")
 public class PaymentController {
 
-    private final UserService userService;
-
     private final PaymentService paymentService;
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;

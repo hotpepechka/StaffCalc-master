@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -31,7 +30,6 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final UserService userService;
-
 
     @Operation(summary = "Get list of users", description = "Get a list of users based on the specified month and year.")
     @ApiResponse(responseCode = "200", description = "List of users retrieved successfully",
