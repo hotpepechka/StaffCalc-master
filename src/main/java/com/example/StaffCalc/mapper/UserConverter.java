@@ -26,10 +26,10 @@ public class UserConverter {
                 .map(UserConverter::convertToUserDTO)
                 .collect(Collectors.toList());
     }
+
     public static List<PaymentDTO> convertToPaymentDTOList(List<Payment> payments) {
         return payments.stream()
                 .map(payment -> new PaymentDTO(payment.getId(), payment.getType(), payment.getPaymentDate(), payment.getAmount()))
                 .collect(Collectors.toList());
     }
-
 }

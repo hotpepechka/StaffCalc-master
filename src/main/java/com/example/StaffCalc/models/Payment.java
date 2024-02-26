@@ -1,11 +1,9 @@
 package com.example.StaffCalc.models;
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.time.LocalDate;
 
 @Getter
@@ -53,6 +51,4 @@ public class Payment {
         this.paymentDate = paymentDate;
         this.amount = amount;
     }
-
-
 }

@@ -1,16 +1,11 @@
 package com.example.StaffCalc.controllers;
-import com.example.StaffCalc.dto.PaymentDTO;
 import com.example.StaffCalc.dto.PeriodDTO;
-import com.example.StaffCalc.models.Payment;
 import com.example.StaffCalc.models.User;
-import com.example.StaffCalc.repository.PaymentRepository;
 import com.example.StaffCalc.repository.UserRepository;
 import com.example.StaffCalc.service.PeriodUtils;
 import com.example.StaffCalc.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -26,18 +21,13 @@ import java.util.stream.Collectors;
 import com.example.StaffCalc.dto.UserDTO;
 
 @Controller
+@RequiredArgsConstructor
 @RequestMapping("/users")
 public class UserController {
 
     private final UserRepository userRepository;
     private final UserService userService;
 
-    @Autowired
-    public UserController(UserRepository userRepository, UserService userService) {
-        this.userRepository = userRepository;
-        this.userService = userService;
-
-    }
 
     @GetMapping
     public List<UserDTO> list(Model model,
@@ -60,6 +50,9 @@ public class UserController {
         PeriodDTO periodDTO = PeriodUtils.getPeriodForCalculateIncome(resolvedMonth, resolvedYear);
         List<UserDTO> userDTOList = userService.getUsers(periodDTO);
 
+        List<Month> monthsList = PeriodUtils.getMonthsList();
+        int currentMonth = PeriodUtils.getCurrentMonth();
+
         // фильтр по месяцам для рабочих дат
         for (UserDTO user : userDTOList) {
             List<LocalDate> filteredDates = user.getWorkingDates().stream()
@@ -67,6 +60,7 @@ public class UserController {
                     .collect(Collectors.toList());
             user.setFilteredWorkingDates(filteredDates);
         }
+        // фильтр занятых дат
         userDTOList.forEach(userDTO -> {
             List<LocalDate> takenDates = userDTOList.stream()
                     .filter(otherUser -> !otherUser.getId().equals(userDTO.getId()))
@@ -78,9 +72,6 @@ public class UserController {
         });
 
         model.addAttribute("userDTOList", userDTOList);
-
-        List<Month> monthsList = PeriodUtils.getMonthsList();
-        int currentMonth = PeriodUtils.getCurrentMonth();
         model.addAttribute("selectedYear", resolvedYear);
         model.addAttribute("selectedMonth", resolvedMonth);
         model.addAttribute("periodDTO", periodDTO);

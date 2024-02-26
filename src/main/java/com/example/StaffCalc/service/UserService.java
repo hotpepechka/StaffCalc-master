@@ -4,22 +4,13 @@ import com.example.StaffCalc.dto.PeriodDTO;
 import com.example.StaffCalc.dto.UserDTO;
 import com.example.StaffCalc.models.Payment;
 import com.example.StaffCalc.models.User;
-import com.example.StaffCalc.repository.PaymentRepository;
 import com.example.StaffCalc.repository.UserRepository;
 import com.example.StaffCalc.mapper.UserConverter;
 import com.example.StaffCalc.service.calculate.Calculate;
 import jakarta.transaction.Transactional;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service

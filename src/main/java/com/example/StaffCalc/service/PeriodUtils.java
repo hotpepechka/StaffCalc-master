@@ -1,13 +1,9 @@
 package com.example.StaffCalc.service;
-
 import com.example.StaffCalc.dto.PeriodDTO;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.stereotype.Component;
-
 import java.time.LocalDate;
 import java.time.Month;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
