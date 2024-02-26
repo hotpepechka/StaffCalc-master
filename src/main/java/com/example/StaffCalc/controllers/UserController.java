@@ -4,6 +4,10 @@ import com.example.StaffCalc.models.User;
 import com.example.StaffCalc.repository.UserRepository;
 import com.example.StaffCalc.service.PeriodUtils;
 import com.example.StaffCalc.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,6 +33,9 @@ public class UserController {
     private final UserService userService;
 
 
+    @Operation(summary = "Get list of users", description = "Get a list of users based on the specified month and year.")
+    @ApiResponse(responseCode = "200", description = "List of users retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)))
     @GetMapping
     public List<UserDTO> list(Model model,
                        @RequestParam(value = "month", required = false) Integer month,
@@ -81,6 +88,9 @@ public class UserController {
         return userDTOList;
     }
 
+    @Operation(summary = "Add a new user", description = "Add a new user with the specified name.")
+    @ApiResponse(responseCode = "200", description = "User added successfully",
+            content = @Content(mediaType = "text/plain"))
     @PostMapping("/")
     @ResponseBody
     public ResponseEntity<String> addUser(@RequestParam String name, RedirectAttributes redirectAttributes) {
@@ -91,6 +101,9 @@ public class UserController {
         return ResponseEntity.ok("Пользователь успешно добавлен");
     }
 
+    @Operation(summary = "Edit user", description = "Edit an existing user with the specified ID.")
+    @ApiResponse(responseCode = "200", description = "User edited successfully",
+            content = @Content(mediaType = "text/plain"))
     @PutMapping("/{id}")
     @ResponseBody
     public ResponseEntity<String> editUser(@PathVariable Long id,
@@ -127,6 +140,9 @@ public class UserController {
         return ResponseEntity.ok("Пользователь успешно обновлен");
     }
 
+    @Operation(summary = "Delete user", description = "Delete a user with the specified ID.")
+    @ApiResponse(responseCode = "200", description = "User deleted successfully",
+            content = @Content(mediaType = "text/plain"))
     @DeleteMapping("/delete/{id}")
     @ResponseBody
     public ResponseEntity<String> deleteUser(@PathVariable Long id) {

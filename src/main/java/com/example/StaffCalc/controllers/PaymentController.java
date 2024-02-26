@@ -5,6 +5,9 @@ import com.example.StaffCalc.repository.PaymentRepository;
 import com.example.StaffCalc.repository.UserRepository;
 import com.example.StaffCalc.service.PaymentService;
 import com.example.StaffCalc.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +29,9 @@ public class PaymentController {
     private final PaymentRepository paymentRepository;
 
 
+    @Operation(summary = "Add a payment", description = "Add a new payment for the specified user.")
+    @ApiResponse(responseCode = "200", description = "Payment added successfully",
+            content = @Content(mediaType = "text/plain"))
     @PutMapping("/{id}")
     public ResponseEntity<String> addPayment(@PathVariable Long id,
                                              @RequestParam String newPaymentDate,
@@ -50,7 +56,9 @@ public class PaymentController {
         }
     }
 
-
+    @Operation(summary = "Delete a payment", description = "Delete a payment with the specified ID.")
+    @ApiResponse(responseCode = "200", description = "Payment deleted successfully",
+            content = @Content(mediaType = "text/plain"))
     @DeleteMapping("/delete/{paymentId}")
     public ResponseEntity<String> deletePayment(@PathVariable Long paymentId) {
         paymentRepository.deleteById(paymentId);
