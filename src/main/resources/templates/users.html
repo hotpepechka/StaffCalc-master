@@ -78,7 +78,8 @@
         (основная оплата)
         <span th:text="${#temporals.format(periodDTO.endDate.withDayOfMonth(15), 'dd.MM')}"></span>
         <span th:text="${user.income - user.totalPayments } + ' руб'"></span>
-
+            TODO основаня выплата должна быть равна доход работника - минус авансовый платеж. Сейчас получаем два платежа которые по сумме выше дохода
+            Так же вижу что в расчетах сейчас не учитываются внеплановый выплаты
         </td>
 
         <td>

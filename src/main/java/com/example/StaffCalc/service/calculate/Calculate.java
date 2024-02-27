@@ -12,5 +12,6 @@ public interface Calculate {
 
     double calculateIncome(Set<LocalDate> workingDates, PeriodDTO periodDTO);
 
+    //TODO не используемый метод с пустой реализацией в имплеметациях
     public void updatePaymentsForUser(User user);
 }

@@ -19,13 +19,22 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
 
+    //TODO сервси помечен как Transactional - получается что каждый метод транзакционный
+    //в этом случае у тебя под транзакцию попадает логика связанная с конвертаций
+    //корректнее для данного метода будет оставить транзакицю только в paymentRepository в момент получения данных
+    //для остальных операций она не требуется
     public List<PaymentDTO> getUserPaymentsInPeriod(Long userId, PeriodDTO periodDTO) {
+        //TODO забыл про сдвиг даты для платежей - сейчас все еще платеж внесенный в дату выплаты попадает не в тот период
         List<Payment> userPayments = paymentRepository.findByUser_IdInAndPaymentDateBetween(
                 Collections.singletonList(userId), periodDTO.getStartDate(), periodDTO.getEndDate());
 
         return UserConverter.convertToPaymentDTOList(userPayments);
     }
 
+    //TODO сервси помечен как Transactional - получается что каждый метод транзакционный
+    //в этом случае у тебя под транзакцию попадает логика связанная с фильтрацией и расчетом суммы
+    //корректнее для данного метода будет оставить транзакицю только в paymentRepository в момент получения данных
+    //для остальных операций она не требуется
     public double getSumOfPaymentsInPeriod(Long userId, Payment.PaymentType paymentType, PeriodDTO periodDTO) {
         List<Payment> userPayments = paymentRepository.findByUser_IdInAndPaymentDateBetween(
                 Collections.singletonList(userId), periodDTO.getStartDate(), periodDTO.getEndDate());

@@ -58,6 +58,7 @@ public class UserController {
         List<Month> monthsList = PeriodUtils.getMonthsList();
         int currentMonth = PeriodUtils.getCurrentMonth();
 
+        //TODO методы ниже относятся к заполнению DTO пользователя их так же можно из контроллера унести в userService в метод формирования списка этих DTO
         // фильтр по месяцам для рабочих дат
         for (UserDTO user : userDTOList) {
             List<LocalDate> filteredDates = user.getWorkingDates().stream()
@@ -108,7 +109,7 @@ public class UserController {
                            @RequestParam String name,
                            @RequestParam(value = "workingDates", required = false) String workingDatesString,
                            RedirectAttributes redirectAttributes) {
-
+        //TODO вся логика в этом методе относится к работе UserService - сделай там метод изменения и перенсе туда это логику
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
 
@@ -138,6 +139,7 @@ public class UserController {
         return ResponseEntity.ok("Пользователь успешно обновлен");
     }
 
+    //TODO так же замечание к пути delete как и в PaymentController
     @Operation(summary = "Delete user", description = "Delete a user with the specified ID.")
     @ApiResponse(responseCode = "200", description = "User deleted successfully",
             content = @Content(mediaType = "text/plain"))

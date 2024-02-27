@@ -39,6 +39,11 @@ public class UserService {
             List<PaymentDTO> paymentDTOList = paymentService.getUserPaymentsInPeriod(userId, periodDTO);
             userDTO.setPayments(paymentDTOList);
 
+            //TODO метожды ниже проводят расчет трех типов выплат при этом каждый из них ходит в базу и вытягивает все платежи за период
+            //потом они фильтрую по типу и считают сумму - получаем в данном методе 4 одинаковых запроса в БД
+            //на 39 строке ты уже вытянул эти данные из базы и у тебя есть список платежей за период
+            // просто фильтруй их по типу в стримах и считай сумму - не нужно плодить кучу не нужных запросов в персистентный слой
+
             // сумма основных выплат
             double mainPayments = paymentService.getSumOfPaymentsInPeriod(userId, Payment.PaymentType.MAIN_PAYMENT, periodDTO);
             userDTO.setMainPayments(mainPayments);
