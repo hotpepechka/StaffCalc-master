@@ -31,8 +31,6 @@ public class PeriodUtils {
                 && date.isBefore(period.getEndDate().plusDays(1));
     }
 
-
-
     public static List<Month> getMonthsList() {
         return Arrays.asList(Month.values());
     }
@@ -40,6 +38,5 @@ public class PeriodUtils {
     public static int getCurrentMonth() {
         return LocalDate.now().getMonthValue();
     }
-
 
 }

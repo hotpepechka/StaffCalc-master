@@ -17,10 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDate;
 import java.time.Month;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.stream.Collectors;
 import com.example.StaffCalc.dto.UserDTO;
 
 @Controller
@@ -58,24 +55,8 @@ public class UserController {
         List<Month> monthsList = PeriodUtils.getMonthsList();
         int currentMonth = PeriodUtils.getCurrentMonth();
 
-        //TODO методы ниже относятся к заполнению DTO пользователя их так же можно из контроллера унести в userService в метод формирования списка этих DTO
-        // фильтр по месяцам для рабочих дат
-        for (UserDTO user : userDTOList) {
-            List<LocalDate> filteredDates = user.getWorkingDates().stream()
-                    .filter(date -> PeriodUtils.inPeriod(periodDTO, date))
-                    .collect(Collectors.toList());
-            user.setFilteredWorkingDates(filteredDates);
-        }
-        // фильтр занятых дат
-        userDTOList.forEach(userDTO -> {
-            List<LocalDate> takenDates = userDTOList.stream()
-                    .filter(otherUser -> !otherUser.getId().equals(userDTO.getId()))
-                    .flatMap(otherUser -> otherUser.getWorkingDates().stream())
-                    .distinct()
-                    .collect(Collectors.toList());
-
-            userDTO.setTakenDates(takenDates);
-        });
+        userService.fillFilteredWorkingDates(userDTOList, periodDTO);
+        userService.fillTakenDates(userDTOList);
 
         model.addAttribute("userDTOList", userDTOList);
         model.addAttribute("selectedYear", resolvedYear);
@@ -106,44 +87,22 @@ public class UserController {
     @PutMapping("/{id}")
     @ResponseBody
     public ResponseEntity<String> editUser(@PathVariable Long id,
-                           @RequestParam String name,
-                           @RequestParam(value = "workingDates", required = false) String workingDatesString,
-                           RedirectAttributes redirectAttributes) {
-        //TODO вся логика в этом методе относится к работе UserService - сделай там метод изменения и перенсе туда это логику
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
-
-        user.setName(name);
-
-        // Обработка рабочих дат
-        if (workingDatesString != null && !workingDatesString.isEmpty()) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            Set<LocalDate> parsedDates = Arrays.stream(workingDatesString.split(","))
-                    .map(date -> {
-                        try {
-                            return LocalDate.parse(date.trim(), formatter);
-                        } catch (DateTimeParseException e) {
-                            throw new IllegalArgumentException("Invalid date format: " + date);
-                        }
-                    })
-                    .collect(Collectors.toSet());
-
-            user.setWorkingDates(parsedDates);
-        } else {
-            user.setWorkingDates(Collections.emptySet());
+                                           @RequestParam String name,
+                                           @RequestParam(value = "workingDates", required = false) String workingDatesString,
+                                           RedirectAttributes redirectAttributes) {
+        try {
+            userService.editUser(id, name, workingDatesString);
+            redirectAttributes.addFlashAttribute("message", "User updated successfully");
+            return ResponseEntity.ok("Пользователь успешно обновлен");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
-
-        userRepository.save(user);
-
-        redirectAttributes.addFlashAttribute("message", "User updated successfully");
-        return ResponseEntity.ok("Пользователь успешно обновлен");
     }
 
-    //TODO так же замечание к пути delete как и в PaymentController
     @Operation(summary = "Delete user", description = "Delete a user with the specified ID.")
     @ApiResponse(responseCode = "200", description = "User deleted successfully",
             content = @Content(mediaType = "text/plain"))
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     @ResponseBody
     public ResponseEntity<String> deleteUser(@PathVariable Long id) {
         try {

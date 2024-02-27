@@ -10,7 +10,12 @@ import com.example.StaffCalc.service.calculate.Calculate;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -21,13 +26,12 @@ public class UserService {
     private final Calculate calculate;
     private final PaymentService paymentService;
 
-
     public List<UserDTO> getUsers(PeriodDTO periodDTO) {
         List<User> users = userRepository.findAll();
         List<UserDTO> userDTOList = UserConverter.convertToUserDTOList(users);
 
         userDTOList.forEach(userDTO -> {
-            long userId = userDTO.getUser().getId();
+            long userId = userDTO.getId();
 
             // доход для работника
             userDTO.setIncome(calculate.calculateIncome(userDTO.getWorkingDates(), periodDTO));
@@ -35,31 +39,80 @@ public class UserService {
             // сумма аванса для работника
             userDTO.setAdvancePaymentAmount(calculate.calculateAdvancePayment(userDTO.getIncome()));
 
-            // список выплат для пользователя
+            // Список всех выплат для пользователя за период
             List<PaymentDTO> paymentDTOList = paymentService.getUserPaymentsInPeriod(userId, periodDTO);
             userDTO.setPayments(paymentDTOList);
 
-            //TODO метожды ниже проводят расчет трех типов выплат при этом каждый из них ходит в базу и вытягивает все платежи за период
-            //потом они фильтрую по типу и считают сумму - получаем в данном методе 4 одинаковых запроса в БД
-            //на 39 строке ты уже вытянул эти данные из базы и у тебя есть список платежей за период
-            // просто фильтруй их по типу в стримах и считай сумму - не нужно плодить кучу не нужных запросов в персистентный слой
-
-            // сумма основных выплат
-            double mainPayments = paymentService.getSumOfPaymentsInPeriod(userId, Payment.PaymentType.MAIN_PAYMENT, periodDTO);
+            double mainPayments = calculateTotalAmountForPaymentType(paymentDTOList, Payment.PaymentType.MAIN_PAYMENT);
             userDTO.setMainPayments(mainPayments);
 
-            // сумма авансовых выплат
-            double advancePayments = paymentService.getSumOfPaymentsInPeriod(userId, Payment.PaymentType.ADVANCE_PAYMENT, periodDTO);
+            double advancePayments = calculateTotalAmountForPaymentType(paymentDTOList, Payment.PaymentType.ADVANCE_PAYMENT);
             userDTO.setAdvancePayments(advancePayments);
 
-            double extraPayments = paymentService.getSumOfPaymentsInPeriod(userId, Payment.PaymentType.EXTRA_PAYMENT, periodDTO);
+            double extraPayments = calculateTotalAmountForPaymentType(paymentDTOList, Payment.PaymentType.EXTRA_PAYMENT);
             userDTO.setExtraPayments(extraPayments);
 
-            // общую сумму выплат для пользователя в период
-            double totalPayments = userDTO.getMainPayments() + userDTO.getAdvancePayments();
+            // Общая сумма выплат для пользователя в период
+            double totalPayments = userDTO.getMainPayments() + userDTO.getAdvancePayments() + userDTO.getExtraPayments();
             userDTO.setTotalPayments(totalPayments);
         });
 
         return userDTOList;
+    }
+
+    private double calculateTotalAmountForPaymentType(List<PaymentDTO> payments, Payment.PaymentType paymentType) {
+        return payments.stream()
+                .filter(paymentDTO -> paymentDTO.getType() == paymentType)
+                .mapToDouble(PaymentDTO::getAmount)
+                .sum();
+    }
+
+    public void fillFilteredWorkingDates(List<UserDTO> userDTOList, PeriodDTO periodDTO) {
+        for (UserDTO user : userDTOList) {
+            List<LocalDate> filteredDates = user.getWorkingDates().stream()
+                    .filter(date -> PeriodUtils.inPeriod(periodDTO, date))
+                    .collect(Collectors.toList());
+            user.setFilteredWorkingDates(filteredDates);
+        }
+    }
+
+    public void fillTakenDates(List<UserDTO> userDTOList) {
+        for (UserDTO userDTO : userDTOList) {
+            List<LocalDate> takenDates = userDTOList.stream()
+                    .filter(otherUser -> !otherUser.getId().equals(userDTO.getId()))
+                    .flatMap(otherUser -> otherUser.getWorkingDates().stream())
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            userDTO.setTakenDates(takenDates);
+        }
+    }
+
+    @Transactional
+    public void editUser(Long id, String name, String workingDatesString) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
+
+        user.setName(name);
+
+        // Обработка рабочих дат
+        if (workingDatesString != null && !workingDatesString.isEmpty()) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            Set<LocalDate> parsedDates = Arrays.stream(workingDatesString.split(","))
+                    .map(date -> {
+                        try {
+                            return LocalDate.parse(date.trim(), formatter);
+                        } catch (DateTimeParseException e) {
+                            throw new IllegalArgumentException("Invalid date format: " + date);
+                        }
+                    })
+                    .collect(Collectors.toSet());
+
+            user.setWorkingDates(parsedDates);
+        } else {
+            user.setWorkingDates(Collections.emptySet());
+        }
+
+        userRepository.save(user);
     }
 }

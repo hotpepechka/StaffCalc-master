@@ -76,10 +76,9 @@
         <span th:text="${user.AdvancePaymentAmount - user.advancePayments} + ' руб'"></span>,
             <br>
         (основная оплата)
-        <span th:text="${#temporals.format(periodDTO.endDate.withDayOfMonth(15), 'dd.MM')}"></span>
-        <span th:text="${user.income - user.totalPayments } + ' руб'"></span>
-            TODO основаня выплата должна быть равна доход работника - минус авансовый платеж. Сейчас получаем два платежа которые по сумме выше дохода
-            Так же вижу что в расчетах сейчас не учитываются внеплановый выплаты
+            <span th:text="${#temporals.format(periodDTO.endDate.withDayOfMonth(15), 'dd.MM')}"></span>
+            <span th:text="${user.income - user.AdvancePaymentAmount - user.mainPayments - user.extraPayments
+            >= 0 ? user.income - user.AdvancePaymentAmount - user.mainPayments - user.extraPayments : 0} + ' руб'"></span>
         </td>
 
         <td>
@@ -118,7 +117,7 @@
                             </tbody>
                         </table>
                     </form>
-                    <form th:if="${userDTO != null}" th:action="@{'/users/payments/' + ${userDTO.id}}" th:method="put" class="addPaymentForm">
+                    <form th:if="${userDTO != null}" th:action="@{'/users/payments/' + ${userDTO.id}}" th:method="post" class="addPaymentForm">
                         <table>
                             <tbody>
                             <tr>
@@ -170,7 +169,7 @@
                         <tbody>
                         <tr th:each="mainPayment, rowStat : ${userDTO.payments}">
                             <td th:text="${#temporals.format(mainPayment.paymentDate, 'dd-MM-yyyy')}"></td>
-                            <td th:text="${mainPayment.amount} + ' руб'"></td>
+                            <td th:text="${mainPayment.amount} + ' руб'" ></td>
                             <td>
                                 <button class="btn btn-danger deletePaymentButton" th:data-payment-id="${mainPayment.id}">Удалить</button>
                             </td>
@@ -268,7 +267,7 @@
             const userId = $(this).data('userid');
 
             $.ajax({
-                url: "/users/delete/" + userId,
+                url: "/users/" + userId,
                 type: "DELETE",
 
                 success: function (response) {
@@ -287,16 +286,16 @@
             const userId = form.find('input[name=userId]').val();
 
             $.ajax({
-                url: "/payments/" + userId,
-                type: "PUT",
+                url: "/payments/" + userId + "/payments", // Updated URL
+                type: "POST",
                 data: form.serialize(),
                 success: function (response) {
                     updateTableAndInitializeButtons();
-                    // Опционально: очистите форму после успешного добавления
+                    // Optional: Clear the form after successful addition
                     form.find('input[type=text]').val('');
                 },
                 error: function (error) {
-                    alert("Ошибка при добавлении выплаты: " + error.responseText);
+                    alert("Error adding payment: " + error.responseText);
                 }
             });
         });
@@ -306,13 +305,13 @@
             const paymentId = $(this).data('payment-id');
 
             $.ajax({
-                url: "/payments/delete/" + paymentId,
+                url: "/payments/" + paymentId, // Updated URL
                 type: "DELETE",
                 success: function (response) {
-                    updateTableAndInitializeButtons(); // Обновление таблицы после удаления
+                    updateTableAndInitializeButtons(); // Update the table after deletion
                 },
                 error: function (error) {
-                    alert("Ошибка при удалении выплаты: " + error.responseText);
+                    alert("Error deleting payment: " + error.responseText);
                 }
             });
         });
