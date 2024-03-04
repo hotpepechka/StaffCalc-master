@@ -14,8 +14,5 @@ public class FixedCalculate extends BaseCalculate {
         return calculateProperties.getAdvancePayment();
     }
 
-    @Override
-    public void updatePaymentsForUser(User user) {
 
-    }
 }

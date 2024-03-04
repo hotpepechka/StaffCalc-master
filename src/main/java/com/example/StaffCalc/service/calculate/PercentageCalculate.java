@@ -14,9 +14,5 @@ public class PercentageCalculate extends BaseCalculate {
         return income * calculateProperties.getAdvancePaymentPercentage() / 100;
     }
 
-    @Override
-    public void updatePaymentsForUser(User user) {
-
-    }
 
 }
