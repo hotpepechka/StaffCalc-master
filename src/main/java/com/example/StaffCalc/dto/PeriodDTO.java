@@ -14,4 +14,14 @@ public class PeriodDTO {
         this.startDate = startDate;
         this.endDate = endDate;
     }
+
+    public int getStartYear() {
+        return startDate.getYear();
+    }
+
+    public int getStartMonth() {
+        return startDate.getMonthValue();
+    }
+
+
 }

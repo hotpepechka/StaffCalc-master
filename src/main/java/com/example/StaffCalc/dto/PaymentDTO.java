@@ -14,6 +14,7 @@ public class PaymentDTO {
     private double amount;
 
 
+
     public PaymentDTO(Long id, Payment.PaymentType type, LocalDate paymentDate, double amount) {
         this.id = id;
         this.type = type;

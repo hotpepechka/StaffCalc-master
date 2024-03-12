@@ -45,7 +45,7 @@ public class PaymentController {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             LocalDate date = LocalDate.parse(newPaymentDate, formatter);
             Payment.PaymentType paymentType = Payment.PaymentType.valueOf(newPaymentType);
-            Double amount = Double.parseDouble(newPaymentAmount);
+            double amount = Double.parseDouble(newPaymentAmount);
             if (amount < 1) {throw new IllegalArgumentException("Amount must be greater than or equal to 1");}
             paymentService.addNewPayment(user, date, paymentType, amount);
             return ResponseEntity.ok("Payment added successfully");

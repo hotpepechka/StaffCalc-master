@@ -12,18 +12,12 @@ import java.util.List;
 public class PeriodUtils {
 
 
-    private static final int START_PERIOD_DATE_FOR_CALCULATE_INCOME = 15;
+    private static final int START_PERIOD_DATE_FOR_CALCULATE_INCOME = 14;
 
     public static PeriodDTO getPeriodForCalculateIncome(int providedMonth, int providedYear) {
-
         LocalDate startDate = LocalDate.of(providedYear, providedMonth, START_PERIOD_DATE_FOR_CALCULATE_INCOME).minusMonths(1);
-        LocalDate endDate = startDate.plusMonths(1).minusDays(1);
-
-        PeriodDTO periodDTO = new PeriodDTO(startDate, endDate);
-        periodDTO.setStartDate(startDate);
-        periodDTO.setEndDate(endDate);
-
-        return periodDTO;
+        LocalDate endDate = LocalDate.of(providedYear, providedMonth, 15);
+        return new PeriodDTO(startDate, endDate);
     }
 
     public static boolean inPeriod(PeriodDTO period, LocalDate date) {

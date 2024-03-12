@@ -1,6 +1,4 @@
 package com.example.StaffCalc.dto;
-
-import com.example.StaffCalc.models.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,23 +12,16 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserDTO {
-
-
     private Long id;
     private String name;
-    private Set<LocalDate> workingDates;
     private double income;
     private double advancePaymentAmount;
     private List<LocalDate> takenDates;
-
     private List<PaymentDTO> payments;
     private double totalPayments;
-    private double MainPayments;
-    private double AdvancePayments;
-    private double ExtraPayments;
-    private List<LocalDate> filteredWorkingDates;
-
-    private User user;
-
-
+    private double mainPayments;
+    private double advancePayments;
+    private double extraPayments;
+    private List<WorkingPeriodDTO> workingPeriods;
+    private Set<LocalDate> workingPeriodDates;
 }

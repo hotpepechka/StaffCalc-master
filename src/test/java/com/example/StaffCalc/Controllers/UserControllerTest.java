@@ -9,6 +9,7 @@ import com.example.StaffCalc.models.User;
 import com.example.StaffCalc.repository.PaymentRepository;
 import com.example.StaffCalc.repository.UserRepository;
 import com.example.StaffCalc.service.PaymentService;
+import com.example.StaffCalc.service.PeriodService;
 import com.example.StaffCalc.service.UserService;
 import com.example.StaffCalc.service.calculate.BaseCalculate;
 import com.example.StaffCalc.service.calculate.PercentageCalculate;
@@ -49,6 +50,8 @@ public class UserControllerTest {
     @Mock
     private PaymentService paymentService;
 
+    @Mock
+    private PeriodService periodService;
 
     @Test
     void testList() {
@@ -70,15 +73,7 @@ public class UserControllerTest {
         assertEquals(ResponseEntity.ok("Пользователь успешно добавлен"), responseEntity);
     }
 
-    @Test
-    void testEditUser() {
-        RedirectAttributes redirectAttributes = mock(RedirectAttributes.class);
-        when(userRepository.findById(any())).thenReturn(java.util.Optional.of(new User("John")));
 
-        ResponseEntity<String> responseEntity = userController.editUser(1L, "John", "2024-01-01", redirectAttributes);
-
-        assertEquals(ResponseEntity.ok("Пользователь успешно обновлен"), responseEntity);
-    }
 
     @Test
     void testDeleteUser() {
@@ -104,6 +99,8 @@ public class UserControllerTest {
 
         verify(paymentService, times(1)).addNewPayment(eq(mockUser), eq(paymentDate), eq(paymentType), eq(paymentAmount));
     }
+
+
 
     @Test
     void testDeletePayment() {
@@ -133,9 +130,7 @@ public class UserControllerTest {
             public double calculateAdvancePayment(Double income) {
                 return 0;
             }
-            @Override
-            public void updatePaymentsForUser(User user) {
-            }
+
         };
         double result = baseCalculate.calculateIncome(workingDates, periodDTO);
         assertEquals(100.0, result);

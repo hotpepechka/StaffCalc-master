@@ -28,6 +28,7 @@ public class UserController {
     private final UserRepository userRepository;
     private final UserService userService;
 
+
     @Operation(summary = "Get list of users", description = "Get a list of users based on the specified month and year.")
     @ApiResponse(responseCode = "200", description = "List of users retrieved successfully",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)))
@@ -51,16 +52,15 @@ public class UserController {
 
         PeriodDTO periodDTO = PeriodUtils.getPeriodForCalculateIncome(resolvedMonth, resolvedYear);
         List<UserDTO> userDTOList = userService.getUsers(periodDTO);
-
+        userService.fillTakenDates(userDTOList);
         List<Month> monthsList = PeriodUtils.getMonthsList();
         int currentMonth = PeriodUtils.getCurrentMonth();
 
-        userService.fillFilteredWorkingDates(userDTOList, periodDTO);
-        userService.fillTakenDates(userDTOList);
-
+        model.addAttribute("loadedData", userDTOList);
         model.addAttribute("userDTOList", userDTOList);
         model.addAttribute("selectedYear", resolvedYear);
         model.addAttribute("selectedMonth", resolvedMonth);
+        model.addAttribute("currentYear", defaultYear);
         model.addAttribute("periodDTO", periodDTO);
         model.addAttribute("months", monthsList);
         model.addAttribute("currentMonth", currentMonth);
@@ -74,12 +74,18 @@ public class UserController {
     @PostMapping("/")
     @ResponseBody
     public ResponseEntity<String> addUser(@RequestParam String name, RedirectAttributes redirectAttributes) {
+        if (name == null || name.isEmpty()) {
+            // Имя пользователя не указано, возвращаем ошибку
+            return ResponseEntity.badRequest().body("Имя пользователя не может быть пустым");
+        }
+
         User newUser = new User(name);
         userRepository.save(newUser);
 
         redirectAttributes.addFlashAttribute("message", "User added successfully");
         return ResponseEntity.ok("Пользователь успешно добавлен");
     }
+
 
     @Operation(summary = "Edit user", description = "Edit an existing user with the specified ID.")
     @ApiResponse(responseCode = "200", description = "User edited successfully",
@@ -89,6 +95,7 @@ public class UserController {
     public ResponseEntity<String> editUser(@PathVariable Long id,
                                            @RequestParam String name,
                                            @RequestParam(value = "workingDates", required = false) String workingDatesString,
+                                           @ModelAttribute PeriodDTO periodDTO,
                                            RedirectAttributes redirectAttributes) {
         try {
             userService.editUser(id, name, workingDatesString);
@@ -98,6 +105,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
 
     @Operation(summary = "Delete user", description = "Delete a user with the specified ID.")
     @ApiResponse(responseCode = "200", description = "User deleted successfully",
