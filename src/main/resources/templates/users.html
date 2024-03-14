@@ -11,190 +11,263 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js" integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+" crossorigin="anonymous"></script>
+    <style>
+        .hidden {
+            display: none;
+        }
 
+        .table th {
+            white-space: normal;
+        }
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Отступ между кнопками */
+        }
+        .custom-input {
+            max-width: 300px; /* Измените это значение по вашему усмотрению */
+            margin-bottom: 5px;
+        }
+
+        @media (min-width: 576px) {
+            .form-inline .form-group {
+                display: flex;
+                align-items: center;
+            }
+            .action-buttons {
+                flex-direction: column; /* Расположить кнопки друг под другом на мобильных устройствах */
+            }
+
+            .form-inline .form-group .mr-2 {
+                margin-right: 10px;
+                margin-top: 10px;
+            }
+
+            .form-inline .form-group .form-control {
+                flex-grow: 1;
+            }
+
+            .form-inline .form-group .btn {
+                margin-top: 0;
+                margin-bottom: 0;
+                margin-left: 10px;
+            }
+
+            .form-inline .form-group {
+                display: flex;
+                align-items: center;
+                margin-top: 10px;
+            }
+
+            .form-inline .form-group .btn-group .btn {
+                margin-left: 10px;
+            }
+        }
+    </style>
 </head>
 <body class="container mt-4">
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="display-4">Список рабочих</h2>
-    <a class="btn btn-danger mt-sm-2" th:href="@{/logout}">Выйти</a>
+    <div class="d-flex align-items-center">
+        <a class="btn btn-danger mt-sm-2 ml-auto" th:href="@{/logout}">Выйти</a>
+    </div>
 </div>
 
 <div class="container">
     <div class="row">
         <div class="col">
-<form id="addUserForm">
-    <label>Имя: </label>
-    <input type="text" id="userName" autocomplete="off" name="name" required>
-    <button type="button" id="addUserButton" class="btn btn-primary">Добавить рабочего</button>
-</form>
-
-<form id="userForm" action="/users" method="get">
-    <label for="month">Выберите месяц: </label>
-    <select id="month" name="month">
-        <option th:each="month : ${#numbers.sequence(1, 12)}"
-                th:value="${month}"
-                th:text="${#temporals.format(#temporals.createNow().withMonth(month).withDayOfMonth(1), 'MMMM')}"
-                th:selected="${month == selectedMonth}"></option>
-    </select>
-    <label for="year">Выберите год: </label>
-    <select id="year" name="year">
-        <option th:each="y : ${#numbers.sequence(2024, 2030)}"
-                th:value="${y}"
-                th:text="${y}"></option>
-    </select>
-
-    <button type="submit" class="btn btn-secondary">Применить</button>
-</form>
-</body>
-
-
-
-                    <table id="tableContainer" class="table table-responsive">
+            <form id="addUserForm" class="form-inline">
+                <div class="form-group mr-2">
+                    <label for="userName" class="mr-2">Имя:</label>
+                    <input type="text" id="userName" class="form-control custom-input" autocomplete="off" name="name" required>
+                    <button type="button" id="addUserButton" class="btn btn-primary">Добавить рабочего</button>
+                </div>
+            </form>
+            <form id="userForm" action="/users" class="form-inline">
+                <div class="form-group form-inline">
+                    <label for="month" class="mr-2">Выберите месяц:</label>
+                    <select id="month" name="month" class="form-control custom-input mr-2">
+                        <option th:each="month : ${#numbers.sequence(1, 12)}"
+                                th:value="${month}"
+                                th:text="${#temporals.format(#temporals.createNow().withMonth(month).withDayOfMonth(1), 'MMMM')}"
+                                th:selected="${month == selectedMonth}"></option>
+                    </select>
+                    <label for="year" class="mr-2">Выберите год:</label>
+                    <select id="year" name="year" class="form-control custom-input mr-2">
+                        <option th:each="y : ${#numbers.sequence(2024, 2030)}"
+                                th:value="${y}"
+                                th:text="${y}"></option>
+                    </select>
+                    <button type="submit" class="btn btn-secondary">Применить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col">
             <h3 th:text="${#temporals.format(periodDTO.endDate, 'MMMM yyyy')}"></h3>
-            <thead>
-            <tr>
-                <th>Имя</th>
-                <th>Рабочие даты</th>
-                <th>Количество рабочих смен</th>
-                <th>Сумма заработка</th>
-                <th>Произведенные выплаты</th>
-                <th>нужно выплатить</th>
-                <th>Действия</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="user : ${userDTOList}">
-                <td th:text="${user.name}"></td>
-                <td>
-                <span style="max-height: 100px; overflow-y: auto; display: inline-block;">
-                    <span th:each="date, iterStat : ${user.workingPeriodDates}" >
-                        <span th:text="${#temporals.format(date, 'dd-MM-yyyy')}"></span>
-                        <span th:if="${!iterStat.last}">|</span>
-                    </span>
-                </span>
-                </td>
+            <div class="table-responsive">
+                <table id="tableContainer" class="table table-sm">
+                    <thead>
+                    <tr>
+                        <th>Имя</th>
+                        <th>Рабочие даты</th>
+                        <th>Количество рабочих смен</th>
+                        <th>Сумма заработка</th>
+                        <th>Произведенные выплаты</th>
+                        <th>нужно выплатить</th>
+                        <th>Действия</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="user : ${userDTOList}">
+                        <td th:text="${user.name}"></td>
+                        <td>
+                            <span style="max-height: 150px; overflow-y: auto; display: inline-block;">
+                                <span th:each="date, iterStat : ${user.workingPeriodDates}" >
+                                    <span th:text="${#temporals.format(date, 'dd-MM-yyyy')}"></span>
+                                    <span th:if="${!iterStat.last}">|</span>
+                                </span>
+                            </span>
+                        </td>
+                        <td th:text="${#lists.size( user.workingPeriodDates)}"></td>
+                        <td><span th:text="${user.income} + ' руб'"></span></td>
+                        <td>
+                            <span style="max-height: 150px; overflow-y: auto; display: inline-block;">
+                               <span th:each="payment, iterStat : ${user.payments}">
+                                    <span th:text="${#temporals.format(payment.paymentDate, 'dd-MM-yyyy')}"></span>
+                                    <span th:text="' - ' + ${payment.amount} + ' руб (' + ${payment.type.getDisplayName()} + ')'"></span>
+                                    <th:block th:if="${!iterStat.last}"><br></th:block>
+                               </span>
+                            </span>
 
+                        </td>
+                        <td>
+                            (аванс)
+                            <span th:text="${#temporals.format(periodDTO.startDate.withDayOfMonth(25), 'dd.MM')}"></span>
+                            <span th:text="${user.AdvancePaymentAmount - user.advancePayments} + ' руб'"></span>,
+                            <br>
+                            (основная оплата)
+                            <span th:text="${#temporals.format(periodDTO.endDate.withDayOfMonth(15), 'dd.MM')}"></span>
+                            <span th:text="${user.income - user.AdvancePaymentAmount - user.mainPayments - user.extraPayments
+                            >= 0 ? user.income - user.AdvancePaymentAmount - user.mainPayments - user.extraPayments : 0} + ' руб'"></span>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="deleteButton btn btn-danger btn-sm" th:attr="data-userid=${user.id}">Удалить</button>
+                                <button class="editButton btn btn-primary btn-sm" th:attr="data-userid=${user.id}">Редактировать</button>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+                <table id="tableContainer1">
+                    <tbody>
+                    <tr th:each="userDTO, iterStat : ${userDTOList}">
+                        <td colspan="7">
+                            <div th:id="'editFormContainer_' + ${userDTO.id}" style="display: none;">
+                                <form th:if="${userDTO != null}" th:action="@{'/users/' + ${userDTO.id}}"
+                                      method="post" th:method="put" th:id="'editUserForm_' + ${userDTO.id}">
+                                    <table>
+                                        <tbody>
+                                        <tr>
+                                            <td>
+                                                <label for="name">Имя:</label>
+                                                <input type="text" class="form-control" autocomplete="off" id="name" name="name" th:value="${userDTO.name}" required />
+                                                <input type="hidden" id="id" name="id" th:value="${userDTO.id}" />
+                                                <input type="hidden" name="currentIndex" th:value="${iterStat.index}" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <label>Рабочие даты:</label>
+                                                <input type="text" class="form-control" autocomplete="off"
+                                                       th:id="'workingDates_' + ${userDTO.id}" name="workingDates"
+                                                       th:value="${#strings.listJoin(userDTO.workingPeriodDates, ', ')}"
+                                                       th:data-taken-dates="${#strings.listJoin(userDTO.takenDates, ', ')}"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <button type="button" id="editUserButton" class="btn btn-primary">Сохранить изменения</button>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </form>
+                                <form th:if="${userDTO != null}" th:action="@{'/users/payments/' + ${userDTO.id}}" th:method="post" class="addPaymentForm">
+                                    <table class="table">
+                                        <tbody>
+                                        <tr>
+                                            <td>
+                                                <h3>Добавить выплату:</h3>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="form-group">
+                                                    <label>Дата выплаты:</label>
+                                                    <input type="text" autocomplete="off" th:id="'newPaymentDate_' + ${userDTO.id}"
+                                                           class="form-control" name="newPaymentDate" required style="max-width: 207px;"/>
+                                                </div>
 
-                <td th:text="${#lists.size( user.workingPeriodDates)}"></td>
-                <td><span th:text="${user.income} + ' руб'"></span></td>
-                <td>
-                   <span th:each="payment, iterStat : ${user.payments}">
-                    <span th:text="${#temporals.format(payment.paymentDate, 'dd-MM-yyyy')}"></span>
-                       <span th:text="' - ' + ${payment.amount} + ' руб (' + ${payment.type.getDisplayName()} + ')'"></span>
-                       <th:block th:if="${!iterStat.last}"><br></th:block>
-                    </span>
-                </td>
-                <td>
-                (аванс)
-                <span th:text="${#temporals.format(periodDTO.startDate.withDayOfMonth(25), 'dd.MM')}"></span>
-                <span th:text="${user.AdvancePaymentAmount - user.advancePayments} + ' руб'"></span>,
-                    <br>
-                (основная оплата)
-                    <span th:text="${#temporals.format(periodDTO.endDate.withDayOfMonth(15), 'dd.MM')}"></span>
-                    <span th:text="${user.income - user.AdvancePaymentAmount - user.mainPayments - user.extraPayments
-                    >= 0 ? user.income - user.AdvancePaymentAmount - user.mainPayments - user.extraPayments : 0} + ' руб'"></span>
-                </td>
-
-                <td>
-                <button class="deleteButton btn btn-danger" th:attr="data-userid=${user.id}">Удалить</button>
-                <button class="editButton btn btn-primary" th:attr="data-userid=${user.id}">Редактировать</button>
-                </td>
-            </tr>
-
-                <tr th:each="userDTO, iterStat : ${userDTOList}">
-                    <td colspan="7">
-                        <div th:id="'editFormContainer_' + ${userDTO.id}" style="display: none;">
-                            <form th:if="${userDTO != null}" th:action="@{'/users/' + ${userDTO.id}}" method="post" th:method="put" th:id="'editUserForm_' + ${userDTO.id}">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="form-group">
+                                                    <label>Тип:</label>
+                                                    <select class="form-control" name="newPaymentType" style="max-width: 207px;">
+                                                        <option value="MAIN_PAYMENT">Основная выплата</option>
+                                                        <option value="ADVANCE_PAYMENT">Авансовая выплата</option>
+                                                        <option value="EXTRA_PAYMENT">Внеплановая выплата</option>
+                                                    </select>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="form-group">
+                                                    <label>Сумма:</label>
+                                                    <input type="text" autocomplete="off" class="form-control"
+                                                           name="newPaymentAmount" style="max-width: 207px;"/>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <input type="hidden" name="userId" th:value="${userDTO.id}" />
+                                                <button class="btn btn-primary" type="submit">Добавить</button>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </form>
                                 <table>
+                                    <thead>
+                                    <tr>
+                                        <th>Дата</th>
+                                        <th>Сумма</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                    </thead>
                                     <tbody>
-                                    <tr>
+                                    <tr th:each="mainPayment, rowStat : ${userDTO.payments}">
+                                        <td th:text="${#temporals.format(mainPayment.paymentDate, 'dd-MM-yyyy')}"></td>
+                                        <td th:text="${mainPayment.amount} + ' руб'" ></td>
                                         <td>
-                                            <label for="name">Имя:</label>
-                                            <input type="text" id="name" name="name" th:value="${userDTO.name}" required />
-                                            <input type="hidden" id="id" name="id" th:value="${userDTO.id}" />
-                                            <input type="hidden" name="currentIndex" th:value="${iterStat.index}" />
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <label>Рабочие даты (разделенные запятыми):</label>
-                                            <input type="text" autocomplete="off" th:id="'workingDates_' + ${userDTO.id}" name="workingDates"
-                                                   th:value="${#strings.listJoin(userDTO.workingPeriodDates, ', ')}"
-                                                   th:data-taken-dates="${#strings.listJoin(userDTO.takenDates, ', ')}"/>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <button type="button" id="editUserButton" class="btn btn-primary">Сохранить изменения</button>
+                                            <button class="btn btn-danger deletePaymentButton" th:data-payment-id="${mainPayment.id}">Удалить</button>
                                         </td>
                                     </tr>
                                     </tbody>
                                 </table>
-                            </form>
-                            <form th:if="${userDTO != null}" th:action="@{'/users/payments/' + ${userDTO.id}}" th:method="post" class="addPaymentForm">
-                                <table>
-                                    <tbody>
-                                    <tr>
-                                        <td>
-                                            <h3>Добавить выплату:</h3>
-                                            <table>
-                                                <thead>
-                                                <tr>
-                                                    <th>Дата</th>
-                                                    <th>Тип</th>
-                                                    <th>Сумма</th>
-                                                </tr>
-                                                </thead>
-                                                <tbody>
-                                                <tr>
-                                                    <td><input type="text" autocomplete="off" th:id="'newPaymentDate_' + ${userDTO.id}" class="newPaymentDate" name="newPaymentDate" placeholder="Дата" /></td>
-                                                    <td>
-                                                        <select name="newPaymentType">
-                                                            <option value="MAIN_PAYMENT">Основная выплата</option>
-                                                            <option value="ADVANCE_PAYMENT">Авансовая выплата</option>
-                                                            <option value="EXTRA_PAYMENT">Внеплановая выплата</option>
-                                                        </select>
-                                                    </td>
-                                                    <td><input type="text" autocomplete="off" name="newPaymentAmount" /></td>
-                                                </tr>
-                                                </tbody>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <!-- Добавляем скрытое поле для передачи userId -->
-                                            <input type="hidden" name="userId" th:value="${userDTO.id}" />
-                                            <button class="btn btn-primary" type="submit" >Добавить</button>
-                                        </td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </form>
-
-                            <table>
-                                <thead>
-                                <tr>
-                                    <th>Дата</th>
-                                    <th>Сумма</th>
-                                    <th>Действия</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <tr th:each="mainPayment, rowStat : ${userDTO.payments}">
-                                    <td th:text="${#temporals.format(mainPayment.paymentDate, 'dd-MM-yyyy')}"></td>
-                                    <td th:text="${mainPayment.amount} + ' руб'" ></td>
-                                    <td>
-                                        <button class="btn btn-danger deletePaymentButton" th:data-payment-id="${mainPayment.id}">Удалить</button>
-                                    </td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
         </div>
     </div>
 </div>
@@ -205,12 +278,11 @@
 
         $(document).on('click', '.editButton', function (e) {
             const userId = $(this).attr('data-userid');
-            const formId = '#editUserForm_' + userId;
+            const formId = '#editFormContainer_' + userId;
             // Скрываем все формы редактирования, кроме текущей
-            $('[id^=editFormContainer_]').not('#editFormContainer_' + userId).hide();
-
-            // Показываем или скрываем текущую форму редактирования
-            $(formId).toggle();
+            $('[id^=editFormContainer_]').addClass('hidden');
+            // Показываем текущую форму редактирования
+            $(formId).removeClass('hidden');
 
             // Инициализация multiDatesPicker для текущего пользователя
             initializeFlatpickr(userId);
@@ -221,7 +293,7 @@
             const $workingDatesInput = $("#workingDates_" + userId);
             const takenDatesAttr = $workingDatesInput.data('taken-dates');
             const takenDates = takenDatesAttr ? takenDatesAttr.split(',').map(date => date.trim()) : [];
-
+            const $paymentDatesInput = $('#newPaymentDate_' + userId);
 
             const selectedMonth = $('#month').val();
             const selectedYear = $('#year').val();
@@ -242,18 +314,21 @@
                     // заблокированные даты обрабатываются при инициализации
                 },
             });
-        };
 
-
-        function initializeNewPaymentDatePicker(userId) {
             // Инициализация календаря для новых выплат с уникальным идентификатором
-            flatpickr('#newPaymentDate_' + userId, {
+            $paymentDatesInput.flatpickr({
+                mode: 'single', // Выбор нескольких дат
                 dateFormat: 'Y-m-d',
-                defaultDate: 'today', // Установка текущей даты
                 onChange: function (selectedDates) {
 
                 }
             });
+
+        };
+
+
+        function initializeNewPaymentDatePicker(userId) {
+
         }
 
 
@@ -339,6 +414,7 @@
         $(document).on('click', '.deletePaymentButton', function () {
             const paymentId = $(this).data('payment-id');
 
+            const confirmation = confirm("Вы уверены, что хотите удалить выплату?");
             $.ajax({
                 url: "/payments/" + paymentId, // Updated URL
                 type: "DELETE",
@@ -363,6 +439,7 @@
                 success: function (data) {
                     // Обновить содержимое таблицы с новыми данными
                     $("#tableContainer").load(" #tableContainer > *");
+                    $("#tableContainer1").load(" #tableContainer1 > *")
                 },
                 error: function (error) {
                     console.log("Ошибка при обновлении таблицы: " + error.responseText);
